@@ -3,8 +3,8 @@ package tests_test
 import (
 	"testing"
 	"time"
-
-	"gorm.io/gorm"
+	
+	"github.com/gozelle/gorm"
 )
 
 func TestDefaultValue(t *testing.T) {
@@ -18,20 +18,20 @@ func TestDefaultValue(t *testing.T) {
 		Created time.Time `gorm:"default:2000-01-02"`
 		Enabled bool      `gorm:"default:true"`
 	}
-
+	
 	DB.Migrator().DropTable(&Harumph{})
-
+	
 	if err := DB.AutoMigrate(&Harumph{}); err != nil {
 		t.Fatalf("Failed to migrate with default value, got error: %v", err)
 	}
-
+	
 	harumph := Harumph{Email: "hello@gorm.io"}
 	if err := DB.Create(&harumph).Error; err != nil {
 		t.Fatalf("Failed to create data with default value, got error: %v", err)
 	} else if harumph.Name != "foo" || harumph.Name2 != "foo" || harumph.Name3 != "" || harumph.Age != 18 || !harumph.Enabled || harumph.Created.Format("20060102") != "20000102" {
 		t.Fatalf("Failed to create data with default value, got: %+v", harumph)
 	}
-
+	
 	var result Harumph
 	if err := DB.First(&result, "email = ?", "hello@gorm.io").Error; err != nil {
 		t.Fatalf("Failed to find created data, got error: %v", err)

@@ -3,8 +3,8 @@ package clause_test
 import (
 	"fmt"
 	"testing"
-
-	"gorm.io/gorm/clause"
+	
+	"github.com/gozelle/gorm/clause"
 )
 
 func TestLocking(t *testing.T) {
@@ -26,7 +26,7 @@ func TestLocking(t *testing.T) {
 			"SELECT * FROM `users` FOR UPDATE NOWAIT", nil,
 		},
 	}
-
+	
 	for idx, result := range results {
 		t.Run(fmt.Sprintf("case #%v", idx), func(t *testing.T) {
 			checkBuildClauses(t, result.Clauses, result.Result, result.Vars)

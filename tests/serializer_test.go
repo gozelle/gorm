@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"gorm.io/gorm"
-	"gorm.io/gorm/schema"
-	. "gorm.io/gorm/utils/tests"
+	
+	"github.com/gozelle/gorm"
+	"github.com/gozelle/gorm/schema"
+	. "github.com/gozelle/gorm/utils/tests"
 )
 
 type SerializerStruct struct {
@@ -85,10 +85,10 @@ func TestSerializer(t *testing.T) {
 	if err := DB.Migrator().AutoMigrate(&SerializerStruct{}); err != nil {
 		t.Fatalf("no error should happen when migrate scanner, valuer struct, got error %v", err)
 	}
-
+	
 	createdAt := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 	updatedAt := createdAt.Unix()
-
+	
 	data := SerializerStruct{
 		Name:            []byte("jinzhu"),
 		Roles:           []string{"r1", "r2"},
@@ -104,22 +104,22 @@ func TestSerializer(t *testing.T) {
 		},
 		CustomSerializerString: "world",
 	}
-
+	
 	if err := DB.Create(&data).Error; err != nil {
 		t.Fatalf("failed to create data, got error %v", err)
 	}
-
+	
 	var result SerializerStruct
 	if err := DB.Where("roles2 IS NULL AND roles3 = ?", "").First(&result, data.ID).Error; err != nil {
 		t.Fatalf("failed to query data, got error %v", err)
 	}
-
+	
 	AssertEqual(t, result, data)
-
+	
 	if err := DB.Model(&result).Update("roles", "").Error; err != nil {
 		t.Fatalf("failed to update data's roles, got error %v", err)
 	}
-
+	
 	if err := DB.First(&result, data.ID).Error; err != nil {
 		t.Fatalf("failed to query data, got error %v", err)
 	}
@@ -131,24 +131,24 @@ func TestSerializerZeroValue(t *testing.T) {
 	if err := DB.Migrator().AutoMigrate(&SerializerStruct{}); err != nil {
 		t.Fatalf("no error should happen when migrate scanner, valuer struct, got error %v", err)
 	}
-
+	
 	data := SerializerStruct{}
-
+	
 	if err := DB.Create(&data).Error; err != nil {
 		t.Fatalf("failed to create data, got error %v", err)
 	}
-
+	
 	var result SerializerStruct
 	if err := DB.First(&result, data.ID).Error; err != nil {
 		t.Fatalf("failed to query data, got error %v", err)
 	}
-
+	
 	AssertEqual(t, result, data)
-
+	
 	if err := DB.Model(&result).Update("roles", "").Error; err != nil {
 		t.Fatalf("failed to update data's roles, got error %v", err)
 	}
-
+	
 	if err := DB.First(&result, data.ID).Error; err != nil {
 		t.Fatalf("failed to query data, got error %v", err)
 	}
@@ -160,9 +160,9 @@ func TestSerializerAssignFirstOrCreate(t *testing.T) {
 	if err := DB.Migrator().AutoMigrate(&SerializerStruct{}); err != nil {
 		t.Fatalf("no error should happen when migrate scanner, valuer struct, got error %v", err)
 	}
-
+	
 	createdAt := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
-
+	
 	data := SerializerStruct{
 		Name:            []byte("ag9920"),
 		Roles:           []string{"r1", "r2"},
@@ -177,19 +177,19 @@ func TestSerializerAssignFirstOrCreate(t *testing.T) {
 		},
 		CustomSerializerString: "world",
 	}
-
+	
 	// first time insert record
 	out := SerializerStruct{}
 	if err := DB.Assign(data).FirstOrCreate(&out).Error; err != nil {
 		t.Fatalf("failed to FirstOrCreate Assigned data, got error %v", err)
 	}
-
+	
 	var result SerializerStruct
 	if err := DB.First(&result, out.ID).Error; err != nil {
 		t.Fatalf("failed to query data, got error %v", err)
 	}
 	AssertEqual(t, result, out)
-
+	
 	// update record
 	data.Roles = append(data.Roles, "r3")
 	data.JobInfo.Location = "Gates Hillman Complex"
@@ -199,7 +199,7 @@ func TestSerializerAssignFirstOrCreate(t *testing.T) {
 	if err := DB.First(&result, out.ID).Error; err != nil {
 		t.Fatalf("failed to query data, got error %v", err)
 	}
-
+	
 	AssertEqual(t, result.Roles, data.Roles)
 	AssertEqual(t, result.JobInfo.Location, data.JobInfo.Location)
 }

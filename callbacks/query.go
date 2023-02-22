@@ -5,15 +5,15 @@ import (
 	"reflect"
 	"sort"
 	"strings"
-
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
+	
+	"github.com/gozelle/gorm"
+	"github.com/gozelle/gorm/clause"
 )
 
 func Query(db *gorm.DB) {
 	if db.Error == nil {
 		BuildQuerySQL(db)
-
+		
 		if !db.DryRun && db.Error == nil {
 			rows, err := db.Statement.ConnPool.QueryContext(db.Statement.Context, db.Statement.SQL.String(), db.Statement.Vars...)
 			if err != nil {
@@ -34,11 +34,11 @@ func BuildQuerySQL(db *gorm.DB) {
 			db.Statement.AddClause(c)
 		}
 	}
-
+	
 	if db.Statement.SQL.Len() == 0 {
 		db.Statement.SQL.Grow(100)
 		clauseSelect := clause.Select{Distinct: db.Statement.Distinct}
-
+		
 		if db.Statement.ReflectValue.Kind() == reflect.Struct && db.Statement.ReflectValue.Type() == db.Statement.Schema.ModelType {
 			var conds []clause.Expression
 			for _, primaryField := range db.Statement.Schema.PrimaryFields {
@@ -46,12 +46,12 @@ func BuildQuerySQL(db *gorm.DB) {
 					conds = append(conds, clause.Eq{Column: clause.Column{Table: db.Statement.Table, Name: primaryField.DBName}, Value: v})
 				}
 			}
-
+			
 			if len(conds) > 0 {
 				db.Statement.AddClause(clause.Where{Exprs: conds})
 			}
 		}
-
+		
 		if len(db.Statement.Selects) > 0 {
 			clauseSelect.Columns = make([]clause.Column, len(db.Statement.Selects))
 			for idx, name := range db.Statement.Selects {
@@ -81,26 +81,26 @@ func BuildQuerySQL(db *gorm.DB) {
 					queryFields = db.Statement.ReflectValue.Type().Elem() != db.Statement.Schema.ModelType
 				}
 			}
-
+			
 			if queryFields {
 				stmt := gorm.Statement{DB: db}
 				// smaller struct
 				if err := stmt.Parse(db.Statement.Dest); err == nil && (db.QueryFields || stmt.Schema.ModelType != db.Statement.Schema.ModelType) {
 					clauseSelect.Columns = make([]clause.Column, len(stmt.Schema.DBNames))
-
+					
 					for idx, dbName := range stmt.Schema.DBNames {
 						clauseSelect.Columns[idx] = clause.Column{Table: db.Statement.Table, Name: dbName}
 					}
 				}
 			}
 		}
-
+		
 		// inline joins
 		fromClause := clause.From{}
 		if v, ok := db.Statement.Clauses["FROM"].Expression.(clause.From); ok {
 			fromClause = v
 		}
-
+		
 		if len(db.Statement.Joins) != 0 || len(fromClause.Joins) != 0 {
 			if len(db.Statement.Selects) == 0 && len(db.Statement.Omits) == 0 && db.Statement.Schema != nil {
 				clauseSelect.Columns = make([]clause.Column, len(db.Statement.Schema.DBNames))
@@ -108,7 +108,7 @@ func BuildQuerySQL(db *gorm.DB) {
 					clauseSelect.Columns[idx] = clause.Column{Table: db.Statement.Table, Name: dbName}
 				}
 			}
-
+			
 			for _, join := range db.Statement.Joins {
 				if db.Statement.Schema == nil {
 					fromClause.Joins = append(fromClause.Joins, clause.Join{
@@ -116,12 +116,12 @@ func BuildQuerySQL(db *gorm.DB) {
 					})
 				} else if relation, ok := db.Statement.Schema.Relationships.Relations[join.Name]; ok {
 					tableAliasName := relation.Name
-
+					
 					columnStmt := gorm.Statement{
 						Table: tableAliasName, DB: db, Schema: relation.FieldSchema,
 						Selects: join.Selects, Omits: join.Omits,
 					}
-
+					
 					selectColumns, restricted := columnStmt.SelectAndOmitColumns(false, false)
 					for _, s := range relation.FieldSchema.DBNames {
 						if v, ok := selectColumns[s]; (ok && v) || (!ok && !restricted) {
@@ -132,7 +132,7 @@ func BuildQuerySQL(db *gorm.DB) {
 							})
 						}
 					}
-
+					
 					exprs := make([]clause.Expression, len(relation.References))
 					for idx, ref := range relation.References {
 						if ref.OwnPrimaryKey {
@@ -154,21 +154,21 @@ func BuildQuerySQL(db *gorm.DB) {
 							}
 						}
 					}
-
+					
 					{
 						onStmt := gorm.Statement{Table: tableAliasName, DB: db, Clauses: map[string]clause.Clause{}}
 						for _, c := range relation.FieldSchema.QueryClauses {
 							onStmt.AddClause(c)
 						}
-
+						
 						if join.On != nil {
 							onStmt.AddClause(join.On)
 						}
-
+						
 						if cs, ok := onStmt.Clauses["WHERE"]; ok {
 							if where, ok := cs.Expression.(clause.Where); ok {
 								where.Build(&onStmt)
-
+								
 								if onSQL := onStmt.SQL.String(); onSQL != "" {
 									vars := onStmt.Vars
 									for idx, v := range vars {
@@ -177,13 +177,13 @@ func BuildQuerySQL(db *gorm.DB) {
 										db.Dialector.BindVarTo(&bindvar, &onStmt, v)
 										onSQL = strings.Replace(onSQL, bindvar.String(), "?", 1)
 									}
-
+									
 									exprs = append(exprs, clause.Expr{SQL: onSQL, Vars: vars})
 								}
 							}
 						}
 					}
-
+					
 					fromClause.Joins = append(fromClause.Joins, clause.Join{
 						Type:  join.JoinType,
 						Table: clause.Table{Name: relation.FieldSchema.Table, Alias: tableAliasName},
@@ -195,15 +195,15 @@ func BuildQuerySQL(db *gorm.DB) {
 					})
 				}
 			}
-
+			
 			db.Statement.AddClause(fromClause)
 			db.Statement.Joins = nil
 		} else {
 			db.Statement.AddClauseIfNotExists(clause.From{})
 		}
-
+		
 		db.Statement.AddClauseIfNotExists(clauseSelect)
-
+		
 		db.Statement.Build(db.Statement.BuildClauses...)
 	}
 }
@@ -214,7 +214,7 @@ func Preload(db *gorm.DB) {
 			db.AddError(fmt.Errorf("%w when using preload", gorm.ErrModelValueRequired))
 			return
 		}
-
+		
 		preloadMap := map[string]map[string][]interface{}{}
 		for name := range db.Statement.Preloads {
 			preloadFields := strings.Split(name, ".")
@@ -224,7 +224,7 @@ func Preload(db *gorm.DB) {
 						if _, ok := preloadMap[rel.Name]; !ok {
 							preloadMap[rel.Name] = map[string][]interface{}{}
 						}
-
+						
 						if value := strings.TrimPrefix(strings.TrimPrefix(name, preloadFields[0]), "."); value != "" {
 							preloadMap[rel.Name][value] = db.Statement.Preloads[name]
 						}
@@ -234,31 +234,31 @@ func Preload(db *gorm.DB) {
 				if _, ok := preloadMap[preloadFields[0]]; !ok {
 					preloadMap[preloadFields[0]] = map[string][]interface{}{}
 				}
-
+				
 				if value := strings.TrimPrefix(strings.TrimPrefix(name, preloadFields[0]), "."); value != "" {
 					preloadMap[preloadFields[0]][value] = db.Statement.Preloads[name]
 				}
 			}
 		}
-
+		
 		preloadNames := make([]string, 0, len(preloadMap))
 		for key := range preloadMap {
 			preloadNames = append(preloadNames, key)
 		}
 		sort.Strings(preloadNames)
-
+		
 		preloadDB := db.Session(&gorm.Session{Context: db.Statement.Context, NewDB: true, SkipHooks: db.Statement.SkipHooks, Initialized: true})
 		db.Statement.Settings.Range(func(k, v interface{}) bool {
 			preloadDB.Statement.Settings.Store(k, v)
 			return true
 		})
-
+		
 		if err := preloadDB.Statement.Parse(db.Statement.Dest); err != nil {
 			return
 		}
 		preloadDB.Statement.ReflectValue = db.Statement.ReflectValue
 		preloadDB.Statement.Unscoped = db.Statement.Unscoped
-
+		
 		for _, name := range preloadNames {
 			if rel := preloadDB.Statement.Schema.Relationships.Relations[name]; rel != nil {
 				db.AddError(preload(preloadDB.Table("").Session(&gorm.Session{Context: db.Statement.Context, SkipHooks: db.Statement.SkipHooks}), rel, append(db.Statement.Preloads[name], db.Statement.Preloads[clause.Associations]...), preloadMap[name]))

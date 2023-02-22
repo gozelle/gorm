@@ -2,8 +2,8 @@ package gorm
 
 import (
 	"errors"
-
-	"gorm.io/gorm/logger"
+	
+	"github.com/gozelle/gorm/logger"
 )
 
 var (

@@ -3,11 +3,11 @@ package clause_test
 import (
 	"sync"
 	"testing"
-
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
-	"gorm.io/gorm/schema"
-	"gorm.io/gorm/utils/tests"
+	
+	"github.com/gozelle/gorm"
+	"github.com/gozelle/gorm/clause"
+	"github.com/gozelle/gorm/schema"
+	"github.com/gozelle/gorm/utils/tests"
 )
 
 func TestJoin(t *testing.T) {

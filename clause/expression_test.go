@@ -6,11 +6,11 @@ import (
 	"reflect"
 	"sync"
 	"testing"
-
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
-	"gorm.io/gorm/schema"
-	"gorm.io/gorm/utils/tests"
+	
+	"github.com/gozelle/gorm"
+	"github.com/gozelle/gorm/clause"
+	"github.com/gozelle/gorm/schema"
+	"github.com/gozelle/gorm/utils/tests"
 )
 
 func TestExpr(t *testing.T) {
@@ -23,7 +23,7 @@ func TestExpr(t *testing.T) {
 		Vars:   []interface{}{clause.Table{Name: "users"}, clause.Column{Name: "id"}, clause.Expr{SQL: "int"}, clause.Column{Name: "name"}, clause.Expr{SQL: "text"}},
 		Result: "create table `users` (`id` int, `name` text)",
 	}}
-
+	
 	for idx, result := range results {
 		t.Run(fmt.Sprintf("case #%v", idx), func(t *testing.T) {
 			user, _ := schema.Parse(&tests.User{}, &sync.Map{}, db.NamingStrategy)
@@ -40,12 +40,12 @@ func TestNamedExpr(t *testing.T) {
 	type Base struct {
 		Name2 string
 	}
-
+	
 	type NamedArgument struct {
 		Name1 string
 		Base
 	}
-
+	
 	results := []struct {
 		SQL          string
 		Result       string
@@ -133,7 +133,7 @@ func TestNamedExpr(t *testing.T) {
 		Vars:   []interface{}{clause.Table{Name: "table", Alias: "alias", Raw: true}},
 		Result: "table alias",
 	}}
-
+	
 	for idx, result := range results {
 		t.Run(fmt.Sprintf("case #%v", idx), func(t *testing.T) {
 			user, _ := schema.Parse(&tests.User{}, &sync.Map{}, db.NamingStrategy)
@@ -142,7 +142,7 @@ func TestNamedExpr(t *testing.T) {
 			if stmt.SQL.String() != result.Result {
 				t.Errorf("generated SQL is not equal, expects %v, but got %v", result.Result, stmt.SQL.String())
 			}
-
+			
 			if !reflect.DeepEqual(result.ExpectedVars, stmt.Vars) {
 				t.Errorf("generated vars is not equal, expects %v, but got %v", result.ExpectedVars, stmt.Vars)
 			}
@@ -212,7 +212,7 @@ func TestExpression(t *testing.T) {
 		ExpectedVars: []interface{}{100},
 		Result:       "SUM(`users`.`id`) >= ?",
 	}}
-
+	
 	for idx, result := range results {
 		for idy, expression := range result.Expressions {
 			t.Run(fmt.Sprintf("case #%v.%v", idx, idy), func(t *testing.T) {
@@ -222,7 +222,7 @@ func TestExpression(t *testing.T) {
 				if stmt.SQL.String() != result.Result {
 					t.Errorf("generated SQL is not equal, expects %v, but got %v", result.Result, stmt.SQL.String())
 				}
-
+				
 				if !reflect.DeepEqual(result.ExpectedVars, stmt.Vars) {
 					t.Errorf("generated vars is not equal, expects %v, but got %v", result.ExpectedVars, stmt.Vars)
 				}

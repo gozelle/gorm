@@ -3,8 +3,8 @@ package tests_test
 import (
 	"context"
 	"time"
-
-	"gorm.io/gorm/logger"
+	
+	"github.com/gozelle/gorm/logger"
 )
 
 type Tracer struct {

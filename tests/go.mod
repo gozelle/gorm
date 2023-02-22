@@ -1,4 +1,4 @@
-module gorm.io/gorm/tests
+module github.com/gozelle/gorm/tests
 
 go 1.16
 
@@ -12,7 +12,7 @@ require (
 	gorm.io/driver/postgres v1.4.6
 	gorm.io/driver/sqlite v1.4.4
 	gorm.io/driver/sqlserver v1.4.2
-	gorm.io/gorm v1.24.5
+	github.com/gozelle/gorm v1.24.5
 )
 
-replace gorm.io/gorm => ../
+replace github.com/gozelle/gorm => ../

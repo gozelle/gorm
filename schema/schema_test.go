@@ -4,10 +4,10 @@ import (
 	"strings"
 	"sync"
 	"testing"
-
-	"gorm.io/gorm"
-	"gorm.io/gorm/schema"
-	"gorm.io/gorm/utils/tests"
+	
+	"github.com/gozelle/gorm"
+	"github.com/gozelle/gorm/schema"
+	"github.com/gozelle/gorm/utils/tests"
 )
 
 func TestParseSchema(t *testing.T) {
@@ -15,7 +15,7 @@ func TestParseSchema(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to parse user, got error %v", err)
 	}
-
+	
 	checkUserSchema(t, user)
 }
 
@@ -24,14 +24,14 @@ func TestParseSchemaWithPointerFields(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to parse pointer user, got error %v", err)
 	}
-
+	
 	checkUserSchema(t, user)
 }
 
 func checkUserSchema(t *testing.T, user *schema.Schema) {
 	// check schema
 	checkSchema(t, user, schema.Schema{Name: "User", Table: "users"}, []string{"ID"})
-
+	
 	// check fields
 	fields := []schema.Field{
 		{Name: "ID", DBName: "id", BindNames: []string{"Model", "ID"}, DataType: schema.Uint, PrimaryKey: true, Tag: `gorm:"primarykey"`, TagSettings: map[string]string{"PRIMARYKEY": "PRIMARYKEY"}, Size: 64, HasDefaultValue: true, AutoIncrement: true},
@@ -45,7 +45,7 @@ func checkUserSchema(t *testing.T, user *schema.Schema) {
 		{Name: "ManagerID", DBName: "manager_id", BindNames: []string{"ManagerID"}, DataType: schema.Uint, Size: 64},
 		{Name: "Active", DBName: "active", BindNames: []string{"Active"}, DataType: schema.Bool},
 	}
-
+	
 	for _, f := range fields {
 		checkSchemaField(t, user, &f, func(f *schema.Field) {
 			f.Creatable = true
@@ -53,7 +53,7 @@ func checkUserSchema(t *testing.T, user *schema.Schema) {
 			f.Readable = true
 		})
 	}
-
+	
 	// check relations
 	relations := []Relation{
 		{
@@ -110,7 +110,7 @@ func checkUserSchema(t *testing.T, user *schema.Schema) {
 			References: []Reference{{"ID", "User", "UserID", "user_friends", "", true}, {"ID", "User", "FriendID", "user_friends", "", false}},
 		},
 	}
-
+	
 	for _, relation := range relations {
 		checkSchemaRelation(t, user, relation)
 	}
@@ -121,10 +121,10 @@ func TestParseSchemaWithAdvancedDataType(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to parse pointer user, got error %v", err)
 	}
-
+	
 	// check schema
 	checkSchema(t, user, schema.Schema{Name: "AdvancedDataTypeUser", Table: "advanced_data_type_users"}, []string{"ID"})
-
+	
 	// check fields
 	fields := []schema.Field{
 		{Name: "ID", DBName: "id", BindNames: []string{"ID"}, DataType: schema.Int, PrimaryKey: true, Size: 64, HasDefaultValue: true, AutoIncrement: true},
@@ -135,7 +135,7 @@ func TestParseSchemaWithAdvancedDataType(t *testing.T) {
 		{Name: "Active", DBName: "active", BindNames: []string{"Active"}, DataType: schema.Bool},
 		{Name: "Admin", DBName: "admin", BindNames: []string{"Admin"}, DataType: schema.Bool},
 	}
-
+	
 	for _, f := range fields {
 		checkSchemaField(t, user, &f, func(f *schema.Field) {
 			f.Creatable = true
@@ -156,7 +156,7 @@ func TestCustomizeTableName(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to parse pointer user, got error %v", err)
 	}
-
+	
 	if customize.Table != "customize" {
 		t.Errorf("Failed to customize table with TableName method")
 	}
@@ -167,13 +167,13 @@ func TestNestedModel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to parse nested user, got error %v", err)
 	}
-
+	
 	fields := []schema.Field{
 		{Name: "ID", DBName: "id", BindNames: []string{"VersionModel", "BaseModel", "ID"}, DataType: schema.Uint, PrimaryKey: true, Size: 64, HasDefaultValue: true, AutoIncrement: true},
 		{Name: "CreatedBy", DBName: "created_by", BindNames: []string{"VersionModel", "BaseModel", "CreatedBy"}, DataType: schema.Uint, Size: 64},
 		{Name: "Version", DBName: "version", BindNames: []string{"VersionModel", "Version"}, DataType: schema.Int, Size: 64},
 	}
-
+	
 	for _, f := range fields {
 		checkSchemaField(t, versionUser, &f, func(f *schema.Field) {
 			f.Creatable = true
@@ -188,24 +188,24 @@ func TestEmbeddedStruct(t *testing.T) {
 		gorm.Model
 		OwnerID string
 	}
-
+	
 	type Company struct {
 		ID      int
 		OwnerID int
 		Name    string
 		Ignored string `gorm:"-"`
 	}
-
+	
 	type Corp struct {
 		CorpBase
 		Base Company `gorm:"embedded;embeddedPrefix:company_"`
 	}
-
+	
 	cropSchema, err := schema.Parse(&Corp{}, &sync.Map{}, schema.NamingStrategy{})
 	if err != nil {
 		t.Fatalf("failed to parse embedded struct with primary key, got error %v", err)
 	}
-
+	
 	fields := []schema.Field{
 		{Name: "ID", DBName: "id", BindNames: []string{"CorpBase", "Model", "ID"}, DataType: schema.Uint, PrimaryKey: true, Size: 64, HasDefaultValue: true, AutoIncrement: true, TagSettings: map[string]string{"PRIMARYKEY": "PRIMARYKEY"}},
 		{Name: "ID", DBName: "company_id", BindNames: []string{"Base", "ID"}, DataType: schema.Int, Size: 64, TagSettings: map[string]string{"EMBEDDED": "EMBEDDED", "EMBEDDEDPREFIX": "company_"}},
@@ -214,7 +214,7 @@ func TestEmbeddedStruct(t *testing.T) {
 		{Name: "OwnerID", DBName: "company_owner_id", BindNames: []string{"Base", "OwnerID"}, DataType: schema.Int, Size: 64, TagSettings: map[string]string{"EMBEDDED": "EMBEDDED", "EMBEDDEDPREFIX": "company_"}},
 		{Name: "OwnerID", DBName: "owner_id", BindNames: []string{"CorpBase", "OwnerID"}, DataType: schema.String},
 	}
-
+	
 	for _, f := range fields {
 		checkSchemaField(t, cropSchema, &f, func(f *schema.Field) {
 			if f.Name != "Ignored" {
@@ -232,13 +232,13 @@ type CustomizedNamingStrategy struct {
 
 func (ns CustomizedNamingStrategy) ColumnName(table, column string) string {
 	baseColumnName := ns.NamingStrategy.ColumnName(table, column)
-
+	
 	if table == "" {
 		return baseColumnName
 	}
-
+	
 	s := strings.Split(table, "_")
-
+	
 	var prefix string
 	switch len(s) {
 	case 1:
@@ -256,24 +256,24 @@ func TestEmbeddedStructForCustomizedNamingStrategy(t *testing.T) {
 		gorm.Model
 		OwnerID string
 	}
-
+	
 	type Company struct {
 		ID      int
 		OwnerID int
 		Name    string
 		Ignored string `gorm:"-"`
 	}
-
+	
 	type Corp struct {
 		CorpBase
 		Base Company `gorm:"embedded;embeddedPrefix:company_"`
 	}
-
+	
 	cropSchema, err := schema.Parse(&Corp{}, &sync.Map{}, CustomizedNamingStrategy{schema.NamingStrategy{}})
 	if err != nil {
 		t.Fatalf("failed to parse embedded struct with primary key, got error %v", err)
 	}
-
+	
 	fields := []schema.Field{
 		{Name: "ID", DBName: "cor_id", BindNames: []string{"CorpBase", "Model", "ID"}, DataType: schema.Uint, PrimaryKey: true, Size: 64, HasDefaultValue: true, AutoIncrement: true, TagSettings: map[string]string{"PRIMARYKEY": "PRIMARYKEY"}},
 		{Name: "ID", DBName: "company_cor_id", BindNames: []string{"Base", "ID"}, DataType: schema.Int, Size: 64, TagSettings: map[string]string{"EMBEDDED": "EMBEDDED", "EMBEDDEDPREFIX": "company_"}},
@@ -282,7 +282,7 @@ func TestEmbeddedStructForCustomizedNamingStrategy(t *testing.T) {
 		{Name: "OwnerID", DBName: "company_cor_owner_id", BindNames: []string{"Base", "OwnerID"}, DataType: schema.Int, Size: 64, TagSettings: map[string]string{"EMBEDDED": "EMBEDDED", "EMBEDDEDPREFIX": "company_"}},
 		{Name: "OwnerID", DBName: "cor_owner_id", BindNames: []string{"CorpBase", "OwnerID"}, DataType: schema.String},
 	}
-
+	
 	for _, f := range fields {
 		checkSchemaField(t, cropSchema, &f, func(f *schema.Field) {
 			if f.Name != "Ignored" {

@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
-
-	"gorm.io/gorm/utils"
+	
+	"github.com/gozelle/gorm/utils"
 )
 
 func AssertObjEqual(t *testing.T, r, e interface{}, names ...string) {
@@ -26,7 +26,7 @@ func AssertEqual(t *testing.T, got, expect interface{}) {
 		isEqual := func() {
 			if curTime, ok := got.(time.Time); ok {
 				format := "2006-01-02T15:04:05Z07:00"
-
+				
 				if curTime.Round(time.Second).UTC().Format(format) != expect.(time.Time).Round(time.Second).UTC().Format(format) && curTime.Truncate(time.Second).UTC().Format(format) != expect.(time.Time).Truncate(time.Second).UTC().Format(format) {
 					t.Errorf("%v: expect: %v, got %v after time round", utils.FileWithLineNum(), expect.(time.Time), curTime)
 				}
@@ -34,37 +34,37 @@ func AssertEqual(t *testing.T, got, expect interface{}) {
 				t.Errorf("%v: expect: %#v, got %#v", utils.FileWithLineNum(), expect, got)
 			}
 		}
-
+		
 		if fmt.Sprint(got) == fmt.Sprint(expect) {
 			return
 		}
-
+		
 		if reflect.Indirect(reflect.ValueOf(got)).IsValid() != reflect.Indirect(reflect.ValueOf(expect)).IsValid() {
 			t.Errorf("%v: expect: %+v, got %+v", utils.FileWithLineNum(), expect, got)
 			return
 		}
-
+		
 		if valuer, ok := got.(driver.Valuer); ok {
 			got, _ = valuer.Value()
 		}
-
+		
 		if valuer, ok := expect.(driver.Valuer); ok {
 			expect, _ = valuer.Value()
 		}
-
+		
 		if got != nil {
 			got = reflect.Indirect(reflect.ValueOf(got)).Interface()
 		}
-
+		
 		if expect != nil {
 			expect = reflect.Indirect(reflect.ValueOf(expect)).Interface()
 		}
-
+		
 		if reflect.ValueOf(got).IsValid() != reflect.ValueOf(expect).IsValid() {
 			t.Errorf("%v: expect: %+v, got %+v", utils.FileWithLineNum(), expect, got)
 			return
 		}
-
+		
 		if reflect.ValueOf(got).Kind() == reflect.Slice {
 			if reflect.ValueOf(expect).Kind() == reflect.Slice {
 				if reflect.ValueOf(got).Len() == reflect.ValueOf(expect).Len() {
@@ -81,7 +81,7 @@ func AssertEqual(t *testing.T, got, expect interface{}) {
 				return
 			}
 		}
-
+		
 		if reflect.ValueOf(got).Kind() == reflect.Struct {
 			if reflect.ValueOf(expect).Kind() == reflect.Struct {
 				if reflect.ValueOf(got).NumField() == reflect.ValueOf(expect).NumField() {
@@ -95,14 +95,14 @@ func AssertEqual(t *testing.T, got, expect interface{}) {
 							})
 						}
 					}
-
+					
 					if exported {
 						return
 					}
 				}
 			}
 		}
-
+		
 		if reflect.ValueOf(got).Type().ConvertibleTo(reflect.ValueOf(expect).Type()) {
 			got = reflect.ValueOf(got).Convert(reflect.ValueOf(expect).Type()).Interface()
 			isEqual()

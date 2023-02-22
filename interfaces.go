@@ -3,9 +3,9 @@ package gorm
 import (
 	"context"
 	"database/sql"
-
-	"gorm.io/gorm/clause"
-	"gorm.io/gorm/schema"
+	
+	"github.com/gozelle/gorm/clause"
+	"github.com/gozelle/gorm/schema"
 )
 
 // Dialector GORM database dialector

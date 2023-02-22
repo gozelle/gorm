@@ -7,9 +7,9 @@ import (
 	"regexp"
 	"strings"
 	"testing"
-
+	
 	"github.com/jinzhu/now"
-	"gorm.io/gorm/logger"
+	"github.com/gozelle/gorm/logger"
 )
 
 type JSON json.RawMessage
@@ -46,7 +46,7 @@ func TestExplainSQL(t *testing.T) {
 		esVal  = []byte(`{"Name":"test","Val":"test"}`)
 		es     = ExampleStruct{Name: "test", Val: "test"}
 	)
-
+	
 	results := []struct {
 		SQL           string
 		NumericRegexp *regexp.Regexp
@@ -96,7 +96,7 @@ func TestExplainSQL(t *testing.T) {
 			Result:        fmt.Sprintf(`create table users (name, age, height, actived, bytes, create_at, update_at, deleted_at, email, role, pass, json_struct, example_struct) values ("jinzhu", 1, 999.990000, true, "12345", "2020-02-23 11:10:10", "2020-02-23 11:10:10", NULL, "w@g.\"com", "admin", "pass", %v, %v)`, format(jsVal, `"`), format(esVal, `"`)),
 		},
 	}
-
+	
 	for idx, r := range results {
 		if result := logger.ExplainSQL(r.SQL, r.NumericRegexp, `"`, r.Vars...); result != r.Result {
 			t.Errorf("Explain SQL #%v expects %v, but got %v", idx, r.Result, result)

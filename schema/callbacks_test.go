@@ -4,9 +4,9 @@ import (
 	"reflect"
 	"sync"
 	"testing"
-
-	"gorm.io/gorm"
-	"gorm.io/gorm/schema"
+	
+	"github.com/gozelle/gorm"
+	"github.com/gozelle/gorm/schema"
 )
 
 type UserWithCallback struct{}
@@ -24,13 +24,13 @@ func TestCallback(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to parse user with callback, got error %v", err)
 	}
-
+	
 	for _, str := range []string{"BeforeSave", "AfterCreate"} {
 		if !reflect.Indirect(reflect.ValueOf(user)).FieldByName(str).Interface().(bool) {
 			t.Errorf("%v should be true", str)
 		}
 	}
-
+	
 	for _, str := range []string{"BeforeCreate", "BeforeUpdate", "AfterUpdate", "AfterSave", "BeforeDelete", "AfterDelete", "AfterFind"} {
 		if reflect.Indirect(reflect.ValueOf(user)).FieldByName(str).Interface().(bool) {
 			t.Errorf("%v should be false", str)

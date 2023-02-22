@@ -7,9 +7,9 @@ import (
 	"go/ast"
 	"reflect"
 	"sync"
-
-	"gorm.io/gorm/clause"
-	"gorm.io/gorm/logger"
+	
+	"github.com/gozelle/gorm/clause"
+	"github.com/gozelle/gorm/logger"
 )
 
 // ErrUnsupportedDataType unsupported data type
@@ -85,28 +85,28 @@ func ParseWithSpecialTableName(dest interface{}, cacheStore *sync.Map, namer Nam
 	if dest == nil {
 		return nil, fmt.Errorf("%w: %+v", ErrUnsupportedDataType, dest)
 	}
-
+	
 	value := reflect.ValueOf(dest)
 	if value.Kind() == reflect.Ptr && value.IsNil() {
 		value = reflect.New(value.Type().Elem())
 	}
 	modelType := reflect.Indirect(value).Type()
-
+	
 	if modelType.Kind() == reflect.Interface {
 		modelType = reflect.Indirect(reflect.ValueOf(dest)).Elem().Type()
 	}
-
+	
 	for modelType.Kind() == reflect.Slice || modelType.Kind() == reflect.Array || modelType.Kind() == reflect.Ptr {
 		modelType = modelType.Elem()
 	}
-
+	
 	if modelType.Kind() != reflect.Struct {
 		if modelType.PkgPath() == "" {
 			return nil, fmt.Errorf("%w: %+v", ErrUnsupportedDataType, dest)
 		}
 		return nil, fmt.Errorf("%w: %s.%s", ErrUnsupportedDataType, modelType.PkgPath(), modelType.Name())
 	}
-
+	
 	// Cache the Schema for performance,
 	// Use the modelType or modelType + schemaTable (if it present) as cache key.
 	var schemaCacheKey interface{}
@@ -115,7 +115,7 @@ func ParseWithSpecialTableName(dest interface{}, cacheStore *sync.Map, namer Nam
 	} else {
 		schemaCacheKey = modelType
 	}
-
+	
 	// Load exist schema cache, return if exists
 	if v, ok := cacheStore.Load(schemaCacheKey); ok {
 		s := v.(*Schema)
@@ -123,7 +123,7 @@ func ParseWithSpecialTableName(dest interface{}, cacheStore *sync.Map, namer Nam
 		<-s.initialized
 		return s, s.err
 	}
-
+	
 	modelValue := reflect.New(modelType)
 	tableName := namer.TableName(modelType.Name())
 	if tabler, ok := modelValue.Interface().(Tabler); ok {
@@ -138,7 +138,7 @@ func ParseWithSpecialTableName(dest interface{}, cacheStore *sync.Map, namer Nam
 	if specialTableName != "" && specialTableName != tableName {
 		tableName = specialTableName
 	}
-
+	
 	schema := &Schema{
 		Name:           modelType.Name(),
 		ModelType:      modelType,
@@ -152,7 +152,7 @@ func ParseWithSpecialTableName(dest interface{}, cacheStore *sync.Map, namer Nam
 	}
 	// When the schema initialization is completed, the channel will be closed
 	defer close(schema.initialized)
-
+	
 	// Load exist schema cache, return if exists
 	if v, ok := cacheStore.Load(schemaCacheKey); ok {
 		s := v.(*Schema)
@@ -160,7 +160,7 @@ func ParseWithSpecialTableName(dest interface{}, cacheStore *sync.Map, namer Nam
 		<-s.initialized
 		return s, s.err
 	}
-
+	
 	for i := 0; i < modelType.NumField(); i++ {
 		if fieldStruct := modelType.Field(i); ast.IsExported(fieldStruct.Name) {
 			if field := schema.ParseField(fieldStruct); field.EmbeddedSchema != nil {
@@ -170,12 +170,12 @@ func ParseWithSpecialTableName(dest interface{}, cacheStore *sync.Map, namer Nam
 			}
 		}
 	}
-
+	
 	for _, field := range schema.Fields {
 		if field.DBName == "" && field.DataType != "" {
 			field.DBName = namer.ColumnName(schema.Table, field.Name)
 		}
-
+		
 		if field.DBName != "" {
 			// nonexistence or shortest path or first appear prioritized if has permission
 			if v, ok := schema.FieldsByDBName[field.DBName]; !ok || ((field.Creatable || field.Updatable || field.Readable) && len(field.BindNames) < len(v.BindNames)) {
@@ -184,7 +184,7 @@ func ParseWithSpecialTableName(dest interface{}, cacheStore *sync.Map, namer Nam
 				}
 				schema.FieldsByDBName[field.DBName] = field
 				schema.FieldsByName[field.Name] = field
-
+				
 				if v != nil && v.PrimaryKey {
 					for idx, f := range schema.PrimaryFields {
 						if f == v {
@@ -192,25 +192,25 @@ func ParseWithSpecialTableName(dest interface{}, cacheStore *sync.Map, namer Nam
 						}
 					}
 				}
-
+				
 				if field.PrimaryKey {
 					schema.PrimaryFields = append(schema.PrimaryFields, field)
 				}
 			}
 		}
-
+		
 		if of, ok := schema.FieldsByName[field.Name]; !ok || of.TagSettings["-"] == "-" {
 			schema.FieldsByName[field.Name] = field
 		}
-
+		
 		field.setupValuerAndSetter()
 	}
-
+	
 	prioritizedPrimaryField := schema.LookUpField("id")
 	if prioritizedPrimaryField == nil {
 		prioritizedPrimaryField = schema.LookUpField("ID")
 	}
-
+	
 	if prioritizedPrimaryField != nil {
 		if prioritizedPrimaryField.PrimaryKey {
 			schema.PrioritizedPrimaryField = prioritizedPrimaryField
@@ -220,21 +220,21 @@ func ParseWithSpecialTableName(dest interface{}, cacheStore *sync.Map, namer Nam
 			schema.PrimaryFields = append(schema.PrimaryFields, prioritizedPrimaryField)
 		}
 	}
-
+	
 	if schema.PrioritizedPrimaryField == nil && len(schema.PrimaryFields) == 1 {
 		schema.PrioritizedPrimaryField = schema.PrimaryFields[0]
 	}
-
+	
 	for _, field := range schema.PrimaryFields {
 		schema.PrimaryFieldDBNames = append(schema.PrimaryFieldDBNames, field.DBName)
 	}
-
+	
 	for _, field := range schema.Fields {
 		if field.DataType != "" && field.HasDefaultValue && field.DefaultValueInterface == nil {
 			schema.FieldsWithDefaultDBValue = append(schema.FieldsWithDefaultDBValue, field)
 		}
 	}
-
+	
 	if field := schema.PrioritizedPrimaryField; field != nil {
 		switch field.GORMDataType {
 		case Int, Uint:
@@ -242,13 +242,13 @@ func ParseWithSpecialTableName(dest interface{}, cacheStore *sync.Map, namer Nam
 				if !field.HasDefaultValue || field.DefaultValueInterface != nil {
 					schema.FieldsWithDefaultDBValue = append(schema.FieldsWithDefaultDBValue, field)
 				}
-
+				
 				field.HasDefaultValue = true
 				field.AutoIncrement = true
 			}
 		}
 	}
-
+	
 	callbacks := []string{"BeforeCreate", "AfterCreate", "BeforeUpdate", "AfterUpdate", "BeforeSave", "AfterSave", "BeforeDelete", "AfterDelete", "AfterFind"}
 	for _, name := range callbacks {
 		if methodValue := modelValue.MethodByName(name); methodValue.IsValid() {
@@ -260,7 +260,7 @@ func ParseWithSpecialTableName(dest interface{}, cacheStore *sync.Map, namer Nam
 			}
 		}
 	}
-
+	
 	// Cache the schema
 	if v, loaded := cacheStore.LoadOrStore(schemaCacheKey, schema); loaded {
 		s := v.(*Schema)
@@ -268,14 +268,14 @@ func ParseWithSpecialTableName(dest interface{}, cacheStore *sync.Map, namer Nam
 		<-s.initialized
 		return s, s.err
 	}
-
+	
 	defer func() {
 		if schema.err != nil {
 			logger.Default.Error(context.Background(), schema.err.Error())
 			cacheStore.Delete(modelType)
 		}
 	}()
-
+	
 	if _, embedded := schema.cacheStore.Load(embeddedCacheKey); !embedded {
 		for _, field := range schema.Fields {
 			if field.DataType == "" && (field.Creatable || field.Updatable || field.Readable) {
@@ -285,27 +285,27 @@ func ParseWithSpecialTableName(dest interface{}, cacheStore *sync.Map, namer Nam
 					schema.FieldsByName[field.Name] = field
 				}
 			}
-
+			
 			fieldValue := reflect.New(field.IndirectFieldType)
 			fieldInterface := fieldValue.Interface()
 			if fc, ok := fieldInterface.(CreateClausesInterface); ok {
 				field.Schema.CreateClauses = append(field.Schema.CreateClauses, fc.CreateClauses(field)...)
 			}
-
+			
 			if fc, ok := fieldInterface.(QueryClausesInterface); ok {
 				field.Schema.QueryClauses = append(field.Schema.QueryClauses, fc.QueryClauses(field)...)
 			}
-
+			
 			if fc, ok := fieldInterface.(UpdateClausesInterface); ok {
 				field.Schema.UpdateClauses = append(field.Schema.UpdateClauses, fc.UpdateClauses(field)...)
 			}
-
+			
 			if fc, ok := fieldInterface.(DeleteClausesInterface); ok {
 				field.Schema.DeleteClauses = append(field.Schema.DeleteClauses, fc.DeleteClauses(field)...)
 			}
 		}
 	}
-
+	
 	return schema, schema.err
 }
 
@@ -314,17 +314,17 @@ func getOrParse(dest interface{}, cacheStore *sync.Map, namer Namer) (*Schema, e
 	for modelType.Kind() == reflect.Slice || modelType.Kind() == reflect.Array || modelType.Kind() == reflect.Ptr {
 		modelType = modelType.Elem()
 	}
-
+	
 	if modelType.Kind() != reflect.Struct {
 		if modelType.PkgPath() == "" {
 			return nil, fmt.Errorf("%w: %+v", ErrUnsupportedDataType, dest)
 		}
 		return nil, fmt.Errorf("%w: %s.%s", ErrUnsupportedDataType, modelType.PkgPath(), modelType.Name())
 	}
-
+	
 	if v, ok := cacheStore.Load(modelType); ok {
 		return v.(*Schema), nil
 	}
-
+	
 	return Parse(dest, cacheStore, namer)
 }

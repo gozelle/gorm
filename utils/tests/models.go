@@ -3,8 +3,8 @@ package tests
 import (
 	"database/sql"
 	"time"
-
-	"gorm.io/gorm"
+	
+	"github.com/gozelle/gorm"
 )
 
 // User has one `Account` (has one), many `Pets` (has many) and `Toys` (has many - polymorphic)

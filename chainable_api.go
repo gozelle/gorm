@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-
-	"gorm.io/gorm/clause"
-	"gorm.io/gorm/utils"
+	
+	"github.com/gozelle/gorm/clause"
+	"github.com/gozelle/gorm/utils"
 )
 
 // Model specify the model you would like to run db operations
@@ -38,7 +38,7 @@ func (db *DB) Model(value interface{}) (tx *DB) {
 func (db *DB) Clauses(conds ...clause.Expression) (tx *DB) {
 	tx = db.getInstance()
 	var whereConds []interface{}
-
+	
 	for _, cond := range conds {
 		if c, ok := cond.(clause.Interface); ok {
 			tx.Statement.AddClause(c)
@@ -48,7 +48,7 @@ func (db *DB) Clauses(conds ...clause.Expression) (tx *DB) {
 			whereConds = append(whereConds, cond)
 		}
 	}
-
+	
 	if len(whereConds) > 0 {
 		tx.Statement.AddClause(clause.Where{Exprs: tx.Statement.BuildCondition(whereConds[0], whereConds[1:]...)})
 	}
@@ -111,11 +111,11 @@ func (db *DB) Distinct(args ...interface{}) (tx *DB) {
 //	db.Select([]string{"name", "age"}).Find(&users)
 func (db *DB) Select(query interface{}, args ...interface{}) (tx *DB) {
 	tx = db.getInstance()
-
+	
 	switch v := query.(type) {
 	case []string:
 		tx.Statement.Selects = v
-
+		
 		for _, arg := range args {
 			switch arg := arg.(type) {
 			case string:
@@ -127,7 +127,7 @@ func (db *DB) Select(query interface{}, args ...interface{}) (tx *DB) {
 				return
 			}
 		}
-
+		
 		if clause, ok := tx.Statement.Clauses["SELECT"]; ok {
 			clause.Expression = nil
 			tx.Statement.Clauses["SELECT"] = clause
@@ -145,7 +145,7 @@ func (db *DB) Select(query interface{}, args ...interface{}) (tx *DB) {
 			})
 		} else {
 			tx.Statement.Selects = []string{v}
-
+			
 			for _, arg := range args {
 				switch arg := arg.(type) {
 				case string:
@@ -160,7 +160,7 @@ func (db *DB) Select(query interface{}, args ...interface{}) (tx *DB) {
 					return
 				}
 			}
-
+			
 			if clause, ok := tx.Statement.Clauses["SELECT"]; ok {
 				clause.Expression = nil
 				tx.Statement.Clauses["SELECT"] = clause
@@ -169,14 +169,14 @@ func (db *DB) Select(query interface{}, args ...interface{}) (tx *DB) {
 	default:
 		tx.AddError(fmt.Errorf("unsupported select args %v %v", query, args))
 	}
-
+	
 	return
 }
 
 // Omit specify fields that you want to ignore when creating, updating and querying
 func (db *DB) Omit(columns ...string) (tx *DB) {
 	tx = db.getInstance()
-
+	
 	if len(columns) == 1 && strings.ContainsRune(columns[0], ',') {
 		tx.Statement.Omits = strings.FieldsFunc(columns[0], utils.IsValidDBNameChar)
 	} else {
@@ -250,7 +250,7 @@ func (db *DB) InnerJoins(query string, args ...interface{}) (tx *DB) {
 
 func joins(db *DB, joinType clause.JoinType, query string, args ...interface{}) (tx *DB) {
 	tx = db.getInstance()
-
+	
 	if len(args) == 1 {
 		if db, ok := args[0].(*DB); ok {
 			j := join{
@@ -264,7 +264,7 @@ func joins(db *DB, joinType clause.JoinType, query string, args ...interface{}) 
 			return
 		}
 	}
-
+	
 	tx.Statement.Joins = append(tx.Statement.Joins, join{Name: query, Conds: args, JoinType: joinType})
 	return
 }
@@ -275,7 +275,7 @@ func joins(db *DB, joinType clause.JoinType, query string, args ...interface{}) 
 //	db.Model(&User{}).Select("name, sum(age) as total").Group("name").Find(&results)
 func (db *DB) Group(name string) (tx *DB) {
 	tx = db.getInstance()
-
+	
 	fields := strings.FieldsFunc(name, utils.IsValidDBNameChar)
 	tx.Statement.AddClause(clause.GroupBy{
 		Columns: []clause.Column{{Name: name, Raw: len(fields) != 1}},
@@ -301,7 +301,7 @@ func (db *DB) Having(query interface{}, args ...interface{}) (tx *DB) {
 //	db.Order(clause.OrderByColumn{Column: clause.Column{Name: "name"}, Desc: true})
 func (db *DB) Order(value interface{}) (tx *DB) {
 	tx = db.getInstance()
-
+	
 	switch v := value.(type) {
 	case clause.OrderByColumn:
 		tx.Statement.AddClause(clause.OrderBy{
@@ -429,7 +429,7 @@ func (db *DB) Unscoped() (tx *DB) {
 func (db *DB) Raw(sql string, values ...interface{}) (tx *DB) {
 	tx = db.getInstance()
 	tx.Statement.SQL = strings.Builder{}
-
+	
 	if strings.Contains(sql, "@") {
 		clause.NamedExpr{SQL: sql, Vars: values}.Build(tx.Statement)
 	} else {

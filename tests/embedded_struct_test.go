@@ -5,65 +5,65 @@ import (
 	"encoding/json"
 	"errors"
 	"testing"
-
-	"gorm.io/gorm"
-	. "gorm.io/gorm/utils/tests"
+	
+	"github.com/gozelle/gorm"
+	. "github.com/gozelle/gorm/utils/tests"
 )
 
 func TestEmbeddedStruct(t *testing.T) {
 	type ReadOnly struct {
 		ReadOnly *bool
 	}
-
+	
 	type BasePost struct {
 		Id    int64
 		Title string
 		URL   string
 		ReadOnly
 	}
-
+	
 	type Author struct {
 		ID    string
 		Name  string
 		Email string
 	}
-
+	
 	type HNPost struct {
 		BasePost
 		Author  `gorm:"EmbeddedPrefix:user_"` // Embedded struct
 		Upvotes int32
 	}
-
+	
 	type EngadgetPost struct {
 		BasePost BasePost `gorm:"Embedded"`
 		Author   *Author  `gorm:"Embedded;EmbeddedPrefix:author_"` // Embedded struct
 		ImageUrl string
 	}
-
+	
 	DB.Migrator().DropTable(&HNPost{}, &EngadgetPost{})
 	if err := DB.Migrator().AutoMigrate(&HNPost{}, &EngadgetPost{}); err != nil {
 		t.Fatalf("failed to auto migrate, got error: %v", err)
 	}
-
+	
 	for _, name := range []string{"author_id", "author_name", "author_email"} {
 		if !DB.Migrator().HasColumn(&EngadgetPost{}, name) {
 			t.Errorf("should has prefixed column %v", name)
 		}
 	}
-
+	
 	stmt := gorm.Statement{DB: DB}
 	if err := stmt.Parse(&EngadgetPost{}); err != nil {
 		t.Fatalf("failed to parse embedded struct")
 	} else if len(stmt.Schema.PrimaryFields) != 1 {
 		t.Errorf("should have only one primary field with embedded struct, but got %v", len(stmt.Schema.PrimaryFields))
 	}
-
+	
 	for _, name := range []string{"user_id", "user_name", "user_email"} {
 		if !DB.Migrator().HasColumn(&HNPost{}, name) {
 			t.Errorf("should has prefixed column %v", name)
 		}
 	}
-
+	
 	// save embedded struct
 	DB.Save(&HNPost{BasePost: BasePost{Title: "news"}})
 	DB.Save(&HNPost{BasePost: BasePost{Title: "hn_news"}})
@@ -73,7 +73,7 @@ func TestEmbeddedStruct(t *testing.T) {
 	} else if news.Title != "hn_news" {
 		t.Errorf("embedded struct's value should be scanned correctly")
 	}
-
+	
 	DB.Save(&EngadgetPost{BasePost: BasePost{Title: "engadget_news"}, Author: &Author{Name: "Edward"}})
 	DB.Save(&EngadgetPost{BasePost: BasePost{Title: "engadget_article"}, Author: &Author{Name: "George"}})
 	var egNews EngadgetPost
@@ -82,7 +82,7 @@ func TestEmbeddedStruct(t *testing.T) {
 	} else if egNews.BasePost.Title != "engadget_news" {
 		t.Errorf("embedded struct's value should be scanned correctly")
 	}
-
+	
 	var egPosts []EngadgetPost
 	if err := DB.Order("author_name asc").Find(&egPosts).Error; err != nil {
 		t.Fatalf("no error should happen when query with embedded struct, but got %v", err)
@@ -102,24 +102,24 @@ func TestEmbeddedPointerTypeStruct(t *testing.T) {
 		Title string
 		URL   string
 	}
-
+	
 	type HNPost struct {
 		*BasePost
 		Upvotes int32
 	}
-
+	
 	DB.Migrator().DropTable(&HNPost{})
 	if err := DB.Migrator().AutoMigrate(&HNPost{}); err != nil {
 		t.Fatalf("failed to auto migrate, got error: %v", err)
 	}
-
+	
 	DB.Create(&HNPost{BasePost: &BasePost{Title: "embedded_pointer_type"}})
-
+	
 	var hnPost HNPost
 	if err := DB.First(&hnPost, "title = ?", "embedded_pointer_type").Error; err != nil {
 		t.Errorf("No error should happen when find embedded pointer type, but got %v", err)
 	}
-
+	
 	if hnPost.Title != "embedded_pointer_type" {
 		t.Errorf("Should find correct value for embedded pointer type")
 	}
@@ -138,14 +138,14 @@ func (c *Content) Scan(src interface{}) error {
 	if !ok {
 		return errors.New("Embedded.Scan byte assertion failed")
 	}
-
+	
 	var value Content
 	if err := json.Unmarshal(b, &value); err != nil {
 		return err
 	}
-
+	
 	*c = value
-
+	
 	return nil
 }
 
@@ -154,14 +154,14 @@ func TestEmbeddedScanValuer(t *testing.T) {
 		gorm.Model
 		Content
 	}
-
+	
 	DB.Migrator().DropTable(&HNPost{})
 	if err := DB.Migrator().AutoMigrate(&HNPost{}); err != nil {
 		t.Fatalf("failed to auto migrate, got error: %v", err)
 	}
-
+	
 	hnPost := HNPost{Content: Content{Content: "hello world"}}
-
+	
 	if err := DB.Create(&hnPost).Error; err != nil {
 		t.Errorf("Failed to create got error %v", err)
 	}
@@ -172,9 +172,9 @@ func TestEmbeddedRelations(t *testing.T) {
 		User     `gorm:"embedded"`
 		Advanced bool
 	}
-
+	
 	DB.Migrator().DropTable(&AdvancedUser{})
-
+	
 	if err := DB.AutoMigrate(&AdvancedUser{}); err != nil {
 		if DB.Dialector.Name() != "sqlite" {
 			t.Errorf("Failed to auto migrate advanced user, got error %v", err)
@@ -189,17 +189,17 @@ func TestEmbeddedTagSetting(t *testing.T) {
 	type Tag2 struct {
 		Id int64
 	}
-
+	
 	type EmbeddedTag struct {
 		Tag1 Tag1 `gorm:"Embedded;"`
 		Tag2 Tag2 `gorm:"Embedded;EmbeddedPrefix:t2_"`
 		Name string
 	}
-
+	
 	DB.Migrator().DropTable(&EmbeddedTag{})
 	err := DB.Migrator().AutoMigrate(&EmbeddedTag{})
 	AssertEqual(t, err, nil)
-
+	
 	t1 := EmbeddedTag{Name: "embedded_tag"}
 	err = DB.Save(&t1).Error
 	AssertEqual(t, err, nil)

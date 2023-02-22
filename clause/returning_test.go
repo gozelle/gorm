@@ -3,8 +3,8 @@ package clause_test
 import (
 	"fmt"
 	"testing"
-
-	"gorm.io/gorm/clause"
+	
+	"github.com/gozelle/gorm/clause"
 )
 
 func TestReturning(t *testing.T) {
@@ -27,7 +27,7 @@ func TestReturning(t *testing.T) {
 			"SELECT * FROM `users` RETURNING `users`.`id`,`name`,`age`", nil,
 		},
 	}
-
+	
 	for idx, result := range results {
 		t.Run(fmt.Sprintf("case #%v", idx), func(t *testing.T) {
 			checkBuildClauses(t, result.Clauses, result.Result, result.Vars)

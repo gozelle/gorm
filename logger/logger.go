@@ -8,8 +8,8 @@ import (
 	"log"
 	"os"
 	"time"
-
-	"gorm.io/gorm/utils"
+	
+	"github.com/gozelle/gorm/utils"
 )
 
 // ErrRecordNotFound record not found error
@@ -92,7 +92,7 @@ func New(writer Writer, config Config) Interface {
 		traceWarnStr = "%s %s\n[%.3fms] [rows:%v] %s"
 		traceErrStr  = "%s %s\n[%.3fms] [rows:%v] %s"
 	)
-
+	
 	if config.Colorful {
 		infoStr = Green + "%s\n" + Reset + Green + "[info] " + Reset
 		warnStr = BlueBold + "%s\n" + Reset + Magenta + "[warn] " + Reset
@@ -101,7 +101,7 @@ func New(writer Writer, config Config) Interface {
 		traceWarnStr = Green + "%s " + Yellow + "%s\n" + Reset + RedBold + "[%.3fms] " + Yellow + "[rows:%v]" + Magenta + " %s" + Reset
 		traceErrStr = RedBold + "%s " + MagentaBold + "%s\n" + Reset + Yellow + "[%.3fms] " + BlueBold + "[rows:%v]" + Reset + " %s"
 	}
-
+	
 	return &logger{
 		Writer:       writer,
 		Config:       config,
@@ -154,7 +154,7 @@ func (l logger) Trace(ctx context.Context, begin time.Time, fc func() (string, i
 	if l.LogLevel <= Silent {
 		return
 	}
-
+	
 	elapsed := time.Since(begin)
 	switch {
 	case err != nil && l.LogLevel >= Error && (!errors.Is(err, ErrRecordNotFound) || !l.IgnoreRecordNotFoundError):

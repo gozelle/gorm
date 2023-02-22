@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"sync"
 	"testing"
-
-	"gorm.io/gorm/schema"
+	
+	"github.com/gozelle/gorm/schema"
 )
 
 type UserIndex struct {
@@ -19,15 +19,15 @@ type UserIndex struct {
 	OID          int64  `gorm:"index:idx_id;index:idx_oid,unique"`
 	MemberNumber string `gorm:"index:idx_id,priority:1"`
 	Name7        string `gorm:"index:type"`
-
+	
 	// Composite Index: Flattened structure.
 	Data0A string `gorm:"index:,composite:comp_id0"`
 	Data0B string `gorm:"index:,composite:comp_id0"`
-
+	
 	// Composite Index: Nested structure.
 	Data1A string `gorm:"index:,composite:comp_id1"`
 	CompIdxLevel1C
-
+	
 	// Composite Index: Unique and priority.
 	Data2A string `gorm:"index:,unique,composite:comp_id2,priority:2"`
 	CompIdxLevel2C
@@ -56,7 +56,7 @@ func TestParseIndex(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to parse user index, got error %v", err)
 	}
-
+	
 	results := map[string]schema.Index{
 		"idx_user_indices_name": {
 			Name:   "idx_user_indices_name",
@@ -145,15 +145,15 @@ func TestParseIndex(t *testing.T) {
 			}},
 		},
 	}
-
+	
 	indices := user.ParseIndexes()
-
+	
 	for k, result := range results {
 		v, ok := indices[k]
 		if !ok {
 			t.Fatalf("Failed to found index %v from parsed indices %+v", k, indices)
 		}
-
+		
 		for _, name := range []string{"Name", "Class", "Type", "Where", "Comment", "Option"} {
 			if reflect.ValueOf(result).FieldByName(name).Interface() != reflect.ValueOf(v).FieldByName(name).Interface() {
 				t.Errorf(
@@ -162,7 +162,7 @@ func TestParseIndex(t *testing.T) {
 				)
 			}
 		}
-
+		
 		for idx, ef := range result.Fields {
 			rf := v.Fields[idx]
 			if rf.Field.Name != ef.Field.Name {
@@ -171,7 +171,7 @@ func TestParseIndex(t *testing.T) {
 			if rf.Field.Unique != ef.Field.Unique {
 				t.Fatalf("index field '%s' should equal, expects %v, got %v", rf.Field.Name, rf.Field.Unique, ef.Field.Unique)
 			}
-
+			
 			for _, name := range []string{"Expression", "Sort", "Collate", "Length"} {
 				if reflect.ValueOf(ef).FieldByName(name).Interface() != reflect.ValueOf(rf).FieldByName(name).Interface() {
 					t.Errorf(

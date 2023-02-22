@@ -7,9 +7,9 @@ import (
 	"reflect"
 	"sort"
 	"time"
-
-	"gorm.io/gorm/schema"
-	"gorm.io/gorm/utils"
+	
+	"github.com/gozelle/gorm/schema"
+	"github.com/gozelle/gorm/utils"
 )
 
 func initializeCallbacks(db *DB) *callbacks {
@@ -81,29 +81,29 @@ func (p *processor) Execute(db *DB) *DB {
 			db = scope(db)
 		}
 	}
-
+	
 	var (
 		curTime           = time.Now()
 		stmt              = db.Statement
 		resetBuildClauses bool
 	)
-
+	
 	if len(stmt.BuildClauses) == 0 {
 		stmt.BuildClauses = p.Clauses
 		resetBuildClauses = true
 	}
-
+	
 	if optimizer, ok := db.Statement.Dest.(StatementModifier); ok {
 		optimizer.ModifyStatement(stmt)
 	}
-
+	
 	// assign model values
 	if stmt.Model == nil {
 		stmt.Model = stmt.Dest
 	} else if stmt.Dest == nil {
 		stmt.Dest = stmt.Model
 	}
-
+	
 	// parse model values
 	if stmt.Model != nil {
 		if err := stmt.Parse(stmt.Model); err != nil && (!errors.Is(err, schema.ErrUnsupportedDataType) || (stmt.Table == "" && stmt.TableExpr == nil && stmt.SQL.Len() == 0)) {
@@ -114,7 +114,7 @@ func (p *processor) Execute(db *DB) *DB {
 			}
 		}
 	}
-
+	
 	// assign stmt.ReflectValue
 	if stmt.Dest != nil {
 		stmt.ReflectValue = reflect.ValueOf(stmt.Dest)
@@ -122,18 +122,18 @@ func (p *processor) Execute(db *DB) *DB {
 			if stmt.ReflectValue.IsNil() && stmt.ReflectValue.CanAddr() {
 				stmt.ReflectValue.Set(reflect.New(stmt.ReflectValue.Type().Elem()))
 			}
-
+			
 			stmt.ReflectValue = stmt.ReflectValue.Elem()
 		}
 		if !stmt.ReflectValue.IsValid() {
 			db.AddError(ErrInvalidValue)
 		}
 	}
-
+	
 	for _, f := range p.fns {
 		f(db)
 	}
-
+	
 	if stmt.SQL.Len() > 0 {
 		db.Logger.Trace(stmt.Context, curTime, func() (string, int64) {
 			sql, vars := stmt.SQL.String(), stmt.Vars
@@ -143,16 +143,16 @@ func (p *processor) Execute(db *DB) *DB {
 			return db.Dialector.Explain(sql, vars...), db.RowsAffected
 		}, db.Error)
 	}
-
+	
 	if !stmt.DB.DryRun {
 		stmt.SQL.Reset()
 		stmt.Vars = nil
 	}
-
+	
 	if resetBuildClauses {
 		stmt.BuildClauses = nil
 	}
-
+	
 	return db
 }
 
@@ -197,7 +197,7 @@ func (p *processor) compile() (err error) {
 		}
 	}
 	p.callbacks = callbacks
-
+	
 	if p.fns, err = sortCallbacks(p.callbacks); err != nil {
 		p.db.Logger.Error(context.Background(), "Got error when compile callbacks, got %v", err)
 	}
@@ -262,7 +262,7 @@ func sortCallbacks(cs []*callback) (fns []func(*DB), err error) {
 		}
 		return false
 	})
-
+	
 	for _, c := range cs {
 		// show warning message the callback name already exists
 		if idx := getRIndex(names, c.name); idx > -1 && !c.replace && !c.remove && !cs[idx].remove {
@@ -270,7 +270,7 @@ func sortCallbacks(cs []*callback) (fns []func(*DB), err error) {
 		}
 		names = append(names, c.name)
 	}
-
+	
 	sortCallback = func(c *callback) error {
 		if c.before != "" { // if defined before callback
 			if c.before == "*" && len(sorted) > 0 {
@@ -289,7 +289,7 @@ func sortCallbacks(cs []*callback) (fns []func(*DB), err error) {
 				cs[idx].after = c.name
 			}
 		}
-
+		
 		if c.after != "" { // if defined after callback
 			if c.after == "*" && len(sorted) > 0 {
 				if curIdx := getRIndex(sorted, c.name); curIdx == -1 {
@@ -306,35 +306,35 @@ func sortCallbacks(cs []*callback) (fns []func(*DB), err error) {
 				// if after callback exists but haven't sorted
 				// set after callback's before callback to current callback
 				after := cs[idx]
-
+				
 				if after.before == "" {
 					after.before = c.name
 				}
-
+				
 				if err := sortCallback(after); err != nil {
 					return err
 				}
-
+				
 				if err := sortCallback(c); err != nil {
 					return err
 				}
 			}
 		}
-
+		
 		// if current callback haven't been sorted, append it to last
 		if getRIndex(sorted, c.name) == -1 {
 			sorted = append(sorted, c.name)
 		}
-
+		
 		return nil
 	}
-
+	
 	for _, c := range cs {
 		if err = sortCallback(c); err != nil {
 			return
 		}
 	}
-
+	
 	for _, name := range sorted {
 		if idx := getRIndex(names, name); !cs[idx].remove {
 			fns = append(fns, cs[idx].handler)

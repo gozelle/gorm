@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"strings"
 	"time"
-
-	"gorm.io/gorm/schema"
+	
+	"github.com/gozelle/gorm/schema"
 )
 
 // prepareValues prepare values slice
@@ -62,7 +62,7 @@ func (db *DB) scanIntoStruct(rows Rows, reflectValue reflect.Value, values []int
 			}
 		}
 	}
-
+	
 	db.RowsAffected++
 	db.AddError(rows.Scan(values...))
 	joinedSchemaMap := make(map[*schema.Field]interface{})
@@ -70,7 +70,7 @@ func (db *DB) scanIntoStruct(rows Rows, reflectValue reflect.Value, values []int
 		if field == nil {
 			continue
 		}
-
+		
 		if len(joinFields) == 0 || joinFields[idx][0] == nil {
 			db.AddError(field.Set(db.Statement.Context, reflectValue, values[idx]))
 		} else {
@@ -81,14 +81,14 @@ func (db *DB) scanIntoStruct(rows Rows, reflectValue reflect.Value, values []int
 					if value := reflect.ValueOf(values[idx]).Elem(); value.Kind() == reflect.Ptr && value.IsNil() {
 						continue
 					}
-
+					
 					relValue.Set(reflect.New(relValue.Type().Elem()))
 					joinedSchemaMap[joinSchema] = nil
 				}
 			}
 			db.AddError(joinFields[idx][1].Set(db.Statement.Context, relValue, values[idx]))
 		}
-
+		
 		// release data to pool
 		field.NewValuePool.Put(values[idx])
 	}
@@ -113,18 +113,18 @@ func Scan(rows Rows, db *DB, mode ScanMode) {
 		update              = mode&ScanUpdate != 0
 		onConflictDonothing = mode&ScanOnConflictDoNothing != 0
 	)
-
+	
 	db.RowsAffected = 0
-
+	
 	switch dest := db.Statement.Dest.(type) {
 	case map[string]interface{}, *map[string]interface{}:
 		if initialized || rows.Next() {
 			columnTypes, _ := rows.ColumnTypes()
 			prepareValues(values, db, columnTypes, columns)
-
+			
 			db.RowsAffected++
 			db.AddError(rows.Scan(values...))
-
+			
 			mapValue, ok := dest.(map[string]interface{})
 			if !ok {
 				if v, ok := dest.(*map[string]interface{}); ok {
@@ -140,11 +140,11 @@ func Scan(rows Rows, db *DB, mode ScanMode) {
 		columnTypes, _ := rows.ColumnTypes()
 		for initialized || rows.Next() {
 			prepareValues(values, db, columnTypes, columns)
-
+			
 			initialized = false
 			db.RowsAffected++
 			db.AddError(rows.Scan(values...))
-
+			
 			mapValue := map[string]interface{}{}
 			scanIntoMap(mapValue, values, columns)
 			*dest = append(*dest, mapValue)
@@ -167,11 +167,11 @@ func Scan(rows Rows, db *DB, mode ScanMode) {
 			sch          = db.Statement.Schema
 			reflectValue = db.Statement.ReflectValue
 		)
-
+		
 		if reflectValue.Kind() == reflect.Interface {
 			reflectValue = reflectValue.Elem()
 		}
-
+		
 		reflectValueType := reflectValue.Type()
 		switch reflectValueType.Kind() {
 		case reflect.Array, reflect.Slice:
@@ -181,12 +181,12 @@ func Scan(rows Rows, db *DB, mode ScanMode) {
 		if isPtr {
 			reflectValueType = reflectValueType.Elem()
 		}
-
+		
 		if sch != nil {
 			if reflectValueType != sch.ModelType && reflectValueType.Kind() == reflect.Struct {
 				sch, _ = schema.Parse(db.Statement.Dest, db.cacheStore, db.NamingStrategy)
 			}
-
+			
 			if len(columns) == 1 {
 				// Is Pluck
 				if _, ok := reflect.New(reflectValueType).Interface().(sql.Scanner); (reflectValueType != sch.ModelType && ok) || // is scanner
@@ -195,7 +195,7 @@ func Scan(rows Rows, db *DB, mode ScanMode) {
 					sch = nil
 				}
 			}
-
+			
 			// Not Pluck
 			if sch != nil {
 				matchedFieldCount := make(map[string]int, len(columns))
@@ -221,7 +221,7 @@ func Scan(rows Rows, db *DB, mode ScanMode) {
 						if rel, ok := sch.Relationships.Relations[names[0]]; ok {
 							if field := rel.FieldSchema.LookUpField(strings.Join(names[1:], "__")); field != nil && field.Readable {
 								fields[idx] = field
-
+								
 								if len(joinFields) == 0 {
 									joinFields = make([][2]*schema.Field, len(columns))
 								}
@@ -236,14 +236,14 @@ func Scan(rows Rows, db *DB, mode ScanMode) {
 				}
 			}
 		}
-
+		
 		switch reflectValue.Kind() {
 		case reflect.Slice, reflect.Array:
 			var (
 				elem        reflect.Value
 				isArrayKind = reflectValue.Kind() == reflect.Array
 			)
-
+			
 			if !update || reflectValue.Len() == 0 {
 				update = false
 				// if the slice cap is externally initialized, the externally initialized slice is directly used here
@@ -254,11 +254,11 @@ func Scan(rows Rows, db *DB, mode ScanMode) {
 					db.Statement.ReflectValue.Set(reflectValue)
 				}
 			}
-
+			
 			for initialized || rows.Next() {
 			BEGIN:
 				initialized = false
-
+				
 				if update {
 					if int(db.RowsAffected) >= reflectValue.Len() {
 						return
@@ -275,9 +275,9 @@ func Scan(rows Rows, db *DB, mode ScanMode) {
 				} else {
 					elem = reflect.New(reflectValueType)
 				}
-
+				
 				db.scanIntoStruct(rows, elem, values, fields, joinFields)
-
+				
 				if !update {
 					if !isPtr {
 						elem = elem.Elem()
@@ -291,7 +291,7 @@ func Scan(rows Rows, db *DB, mode ScanMode) {
 					}
 				}
 			}
-
+			
 			if !update {
 				db.Statement.ReflectValue.Set(reflectValue)
 			}
@@ -303,11 +303,11 @@ func Scan(rows Rows, db *DB, mode ScanMode) {
 			db.AddError(rows.Scan(dest))
 		}
 	}
-
+	
 	if err := rows.Err(); err != nil && err != db.Error {
 		db.AddError(err)
 	}
-
+	
 	if db.RowsAffected == 0 && db.Statement.RaiseErrorOnNotFound && db.Error == nil {
 		db.AddError(ErrRecordNotFound)
 	}

@@ -1,11 +1,11 @@
 package tests
 
 import (
-	"gorm.io/gorm"
-	"gorm.io/gorm/callbacks"
-	"gorm.io/gorm/clause"
-	"gorm.io/gorm/logger"
-	"gorm.io/gorm/schema"
+	"github.com/gozelle/gorm"
+	"github.com/gozelle/gorm/callbacks"
+	"github.com/gozelle/gorm/clause"
+	"github.com/gozelle/gorm/logger"
+	"github.com/gozelle/gorm/schema"
 )
 
 type DummyDialector struct{}
@@ -21,7 +21,7 @@ func (DummyDialector) Initialize(db *gorm.DB) error {
 		DeleteClauses:        []string{"DELETE", "FROM", "WHERE", "RETURNING"},
 		LastInsertIDReversed: true,
 	})
-
+	
 	return nil
 }
 
@@ -43,7 +43,7 @@ func (DummyDialector) QuoteTo(writer clause.Writer, str string) {
 		continuousBacktick      int8
 		shiftDelimiter          int8
 	)
-
+	
 	for _, v := range []byte(str) {
 		switch v {
 		case '`':
@@ -69,16 +69,16 @@ func (DummyDialector) QuoteTo(writer clause.Writer, str string) {
 					continuousBacktick -= 1
 				}
 			}
-
+			
 			for ; continuousBacktick > 0; continuousBacktick -= 1 {
 				writer.WriteString("``")
 			}
-
+			
 			writer.WriteByte(v)
 		}
 		shiftDelimiter++
 	}
-
+	
 	if continuousBacktick > 0 && !selfQuoted {
 		writer.WriteString("``")
 	}

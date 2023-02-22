@@ -3,8 +3,8 @@ package clause_test
 import (
 	"fmt"
 	"testing"
-
-	"gorm.io/gorm/clause"
+	
+	"github.com/gozelle/gorm/clause"
 )
 
 func TestGroupBy(t *testing.T) {
@@ -33,7 +33,7 @@ func TestGroupBy(t *testing.T) {
 			[]interface{}{"admin", "U"},
 		},
 	}
-
+	
 	for idx, result := range results {
 		t.Run(fmt.Sprintf("case #%v", idx), func(t *testing.T) {
 			checkBuildClauses(t, result.Clauses, result.Result, result.Vars)

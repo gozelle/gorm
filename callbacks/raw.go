@@ -1,7 +1,7 @@
 package callbacks
 
 import (
-	"gorm.io/gorm"
+	"github.com/gozelle/gorm"
 )
 
 func RawExec(db *gorm.DB) {
@@ -11,7 +11,7 @@ func RawExec(db *gorm.DB) {
 			db.AddError(err)
 			return
 		}
-
+		
 		db.RowsAffected, _ = result.RowsAffected()
 	}
 }

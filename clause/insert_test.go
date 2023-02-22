@@ -3,8 +3,8 @@ package clause_test
 import (
 	"fmt"
 	"testing"
-
-	"gorm.io/gorm/clause"
+	
+	"github.com/gozelle/gorm/clause"
 )
 
 func TestInsert(t *testing.T) {
@@ -26,7 +26,7 @@ func TestInsert(t *testing.T) {
 			"INSERT LOW_PRIORITY INTO `products`", nil,
 		},
 	}
-
+	
 	for idx, result := range results {
 		t.Run(fmt.Sprintf("case #%v", idx), func(t *testing.T) {
 			checkBuildClauses(t, result.Clauses, result.Result, result.Vars)

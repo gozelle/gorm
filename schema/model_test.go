@@ -3,9 +3,9 @@ package schema_test
 import (
 	"database/sql"
 	"time"
-
-	"gorm.io/gorm"
-	"gorm.io/gorm/utils/tests"
+	
+	"github.com/gozelle/gorm"
+	"github.com/gozelle/gorm/utils/tests"
 )
 
 type User struct {

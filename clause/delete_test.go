@@ -3,8 +3,8 @@ package clause_test
 import (
 	"fmt"
 	"testing"
-
-	"gorm.io/gorm/clause"
+	
+	"github.com/gozelle/gorm/clause"
 )
 
 func TestDelete(t *testing.T) {
@@ -22,7 +22,7 @@ func TestDelete(t *testing.T) {
 			"DELETE LOW_PRIORITY FROM `users`", nil,
 		},
 	}
-
+	
 	for idx, result := range results {
 		t.Run(fmt.Sprintf("case #%v", idx), func(t *testing.T) {
 			checkBuildClauses(t, result.Clauses, result.Result, result.Vars)

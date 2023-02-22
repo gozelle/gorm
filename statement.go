@@ -11,11 +11,11 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-
-	"gorm.io/gorm/clause"
-	"gorm.io/gorm/logger"
-	"gorm.io/gorm/schema"
-	"gorm.io/gorm/utils"
+	
+	"github.com/gozelle/gorm/clause"
+	"github.com/gozelle/gorm/logger"
+	"github.com/gozelle/gorm/schema"
+	"github.com/gozelle/gorm/utils"
 )
 
 // Statement statement
@@ -86,7 +86,7 @@ func (stmt *Statement) QuoteTo(writer clause.Writer, field interface{}) {
 			stmt.DB.Dialector.QuoteTo(writer, str)
 		}
 	}
-
+	
 	switch v := field.(type) {
 	case clause.Table:
 		if v.Name == clause.CurrentTable {
@@ -98,7 +98,7 @@ func (stmt *Statement) QuoteTo(writer clause.Writer, field interface{}) {
 		} else {
 			write(v.Raw, v.Name)
 		}
-
+		
 		if v.Alias != "" {
 			writer.WriteByte(' ')
 			write(v.Raw, v.Alias)
@@ -112,7 +112,7 @@ func (stmt *Statement) QuoteTo(writer clause.Writer, field interface{}) {
 			}
 			writer.WriteByte('.')
 		}
-
+		
 		if v.Name == clause.PrimaryKey {
 			if stmt.Schema == nil {
 				stmt.DB.AddError(ErrModelValueRequired)
@@ -126,7 +126,7 @@ func (stmt *Statement) QuoteTo(writer clause.Writer, field interface{}) {
 		} else {
 			write(v.Raw, v.Name)
 		}
-
+		
 		if v.Alias != "" {
 			writer.WriteString(" AS ")
 			write(v.Raw, v.Alias)
@@ -171,7 +171,7 @@ func (stmt *Statement) AddVar(writer clause.Writer, vars ...interface{}) {
 		if idx > 0 {
 			writer.WriteByte(',')
 		}
-
+		
 		switch v := v.(type) {
 		case sql.NamedArg:
 			stmt.Vars = append(stmt.Vars, v.Value)
@@ -211,7 +211,7 @@ func (stmt *Statement) AddVar(writer clause.Writer, vars ...interface{}) {
 					vars = subdb.Statement.Vars
 					sql  = v.Statement.SQL.String()
 				)
-
+				
 				subdb.Statement.Vars = make([]interface{}, 0, len(vars))
 				for _, vv := range vars {
 					subdb.Statement.Vars = append(subdb.Statement.Vars, vv)
@@ -219,7 +219,7 @@ func (stmt *Statement) AddVar(writer clause.Writer, vars ...interface{}) {
 					v.Dialector.BindVarTo(&bindvar, subdb.Statement, vv)
 					sql = strings.Replace(sql, bindvar.String(), "?", 1)
 				}
-
+				
 				subdb.Statement.SQL.Reset()
 				subdb.Statement.Vars = stmt.Vars
 				if strings.Contains(sql, "@") {
@@ -231,7 +231,7 @@ func (stmt *Statement) AddVar(writer clause.Writer, vars ...interface{}) {
 				subdb.Statement.Vars = append(stmt.Vars, subdb.Statement.Vars...)
 				subdb.callbacks.Query().Execute(subdb)
 			}
-
+			
 			writer.WriteString(subdb.Statement.SQL.String())
 			stmt.Vars = subdb.Statement.Vars
 		default:
@@ -288,28 +288,28 @@ func (stmt *Statement) BuildCondition(query interface{}, args ...interface{}) []
 			if s == "" && len(args) == 0 {
 				return nil
 			}
-
+			
 			if len(args) == 0 || (len(args) > 0 && strings.Contains(s, "?")) {
 				// looks like a where condition
 				return []clause.Expression{clause.Expr{SQL: s, Vars: args}}
 			}
-
+			
 			if len(args) > 0 && strings.Contains(s, "@") {
 				// looks like a named query
 				return []clause.Expression{clause.NamedExpr{SQL: s, Vars: args}}
 			}
-
+			
 			if strings.Contains(strings.TrimSpace(s), " ") {
 				// looks like a where condition
 				return []clause.Expression{clause.Expr{SQL: s, Vars: args}}
 			}
-
+			
 			if len(args) == 1 {
 				return []clause.Expression{clause.Eq{Column: s, Value: args[0]}}
 			}
 		}
 	}
-
+	
 	conds := make([]clause.Expression, 0, 4)
 	args = append([]interface{}{query}, args...)
 	for idx, arg := range args {
@@ -319,7 +319,7 @@ func (stmt *Statement) BuildCondition(query interface{}, args ...interface{}) []
 		if valuer, ok := arg.(driver.Valuer); ok {
 			arg, _ = valuer.Value()
 		}
-
+		
 		switch v := arg.(type) {
 		case clause.Expression:
 			conds = append(conds, v)
@@ -327,7 +327,7 @@ func (stmt *Statement) BuildCondition(query interface{}, args ...interface{}) []
 			for _, scope := range v.Statement.scopes {
 				v = scope(v)
 			}
-
+			
 			if cs, ok := v.Statement.Clauses["WHERE"]; ok {
 				if where, ok := cs.Expression.(clause.Where); ok {
 					if len(where.Exprs) == 1 {
@@ -350,7 +350,7 @@ func (stmt *Statement) BuildCondition(query interface{}, args ...interface{}) []
 				keys = append(keys, i)
 			}
 			sort.Strings(keys)
-
+			
 			for _, key := range keys {
 				conds = append(conds, clause.Eq{Column: key, Value: v[key]})
 			}
@@ -360,7 +360,7 @@ func (stmt *Statement) BuildCondition(query interface{}, args ...interface{}) []
 				keys = append(keys, i)
 			}
 			sort.Strings(keys)
-
+			
 			for _, key := range keys {
 				reflectValue := reflect.Indirect(reflect.ValueOf(v[key]))
 				switch reflectValue.Kind() {
@@ -376,7 +376,7 @@ func (stmt *Statement) BuildCondition(query interface{}, args ...interface{}) []
 						for i := 0; i < valueLen; i++ {
 							values[i] = reflectValue.Index(i).Interface()
 						}
-
+						
 						conds = append(conds, clause.IN{Column: key, Values: values})
 					}
 				default:
@@ -388,7 +388,7 @@ func (stmt *Statement) BuildCondition(query interface{}, args ...interface{}) []
 			for reflectValue.Kind() == reflect.Ptr {
 				reflectValue = reflectValue.Elem()
 			}
-
+			
 			if s, err := schema.Parse(arg, stmt.DB.cacheStore, stmt.DB.NamingStrategy); err == nil {
 				selectedColumns := map[string]bool{}
 				if idx == 0 {
@@ -399,7 +399,7 @@ func (stmt *Statement) BuildCondition(query interface{}, args ...interface{}) []
 					}
 				}
 				restricted := len(selectedColumns) != 0
-
+				
 				switch reflectValue.Kind() {
 				case reflect.Struct:
 					for _, field := range s.Fields {
@@ -430,7 +430,7 @@ func (stmt *Statement) BuildCondition(query interface{}, args ...interface{}) []
 						}
 					}
 				}
-
+				
 				if restricted {
 					break
 				}
@@ -446,32 +446,32 @@ func (stmt *Statement) BuildCondition(query interface{}, args ...interface{}) []
 						for i := 0; i < valueLen; i++ {
 							values[i] = reflectValue.Index(i).Interface()
 						}
-
+						
 						if len(values) > 0 {
 							conds = append(conds, clause.IN{Column: clause.PrimaryColumn, Values: values})
 						}
 						return conds
 					}
 				}
-
+				
 				conds = append(conds, clause.IN{Column: clause.PrimaryColumn, Values: args})
 			}
 		}
 	}
-
+	
 	return conds
 }
 
 // Build build sql with clauses names
 func (stmt *Statement) Build(clauses ...string) {
 	var firstClauseWritten bool
-
+	
 	for _, name := range clauses {
 		if c, ok := stmt.Clauses[name]; ok {
 			if firstClauseWritten {
 				stmt.WriteByte(' ')
 			}
-
+			
 			firstClauseWritten = true
 			if b, ok := stmt.DB.ClauseBuilders[name]; ok {
 				b(c, stmt)
@@ -493,7 +493,7 @@ func (stmt *Statement) ParseWithSpecialTableName(value interface{}, specialTable
 			stmt.Table = tables[1]
 			return
 		}
-
+		
 		stmt.Table = stmt.Schema.Table
 	}
 	return err
@@ -518,36 +518,36 @@ func (stmt *Statement) clone() *Statement {
 		RaiseErrorOnNotFound: stmt.RaiseErrorOnNotFound,
 		SkipHooks:            stmt.SkipHooks,
 	}
-
+	
 	if stmt.SQL.Len() > 0 {
 		newStmt.SQL.WriteString(stmt.SQL.String())
 		newStmt.Vars = make([]interface{}, 0, len(stmt.Vars))
 		newStmt.Vars = append(newStmt.Vars, stmt.Vars...)
 	}
-
+	
 	for k, c := range stmt.Clauses {
 		newStmt.Clauses[k] = c
 	}
-
+	
 	for k, p := range stmt.Preloads {
 		newStmt.Preloads[k] = p
 	}
-
+	
 	if len(stmt.Joins) > 0 {
 		newStmt.Joins = make([]join, len(stmt.Joins))
 		copy(newStmt.Joins, stmt.Joins)
 	}
-
+	
 	if len(stmt.scopes) > 0 {
 		newStmt.scopes = make([]func(*DB) *DB, len(stmt.scopes))
 		copy(newStmt.scopes, stmt.scopes)
 	}
-
+	
 	stmt.Settings.Range(func(k, v interface{}) bool {
 		newStmt.Settings.Store(k, v)
 		return true
 	})
-
+	
 	return newStmt
 }
 
@@ -568,7 +568,7 @@ func (stmt *Statement) SetColumn(name string, value interface{}, fromCallbacks .
 			for destValue.Kind() == reflect.Ptr {
 				destValue = destValue.Elem()
 			}
-
+			
 			if stmt.ReflectValue != destValue {
 				if !destValue.CanAddr() {
 					destValueCanAddr := reflect.New(destValue.Type())
@@ -576,7 +576,7 @@ func (stmt *Statement) SetColumn(name string, value interface{}, fromCallbacks .
 					stmt.Dest = destValueCanAddr.Interface()
 					destValue = destValueCanAddr.Elem()
 				}
-
+				
 				switch destValue.Kind() {
 				case reflect.Struct:
 					stmt.AddError(field.Set(stmt.Context, destValue, value))
@@ -584,7 +584,7 @@ func (stmt *Statement) SetColumn(name string, value interface{}, fromCallbacks .
 					stmt.AddError(ErrInvalidData)
 				}
 			}
-
+			
 			switch stmt.ReflectValue.Kind() {
 			case reflect.Slice, reflect.Array:
 				if len(fromCallbacks) > 0 {
@@ -599,7 +599,7 @@ func (stmt *Statement) SetColumn(name string, value interface{}, fromCallbacks .
 					stmt.AddError(ErrInvalidValue)
 					return
 				}
-
+				
 				stmt.AddError(field.Set(stmt.Context, stmt.ReflectValue, value))
 			}
 		} else {
@@ -617,7 +617,7 @@ func (stmt *Statement) Changed(fields ...string) bool {
 	case reflect.Slice, reflect.Array:
 		modelValue = stmt.ReflectValue.Index(stmt.CurDestIndex)
 	}
-
+	
 	selectColumns, restricted := stmt.SelectAndOmitColumns(false, true)
 	changed := func(field *schema.Field) bool {
 		fieldValue, _ := field.ValueOf(stmt.Context, modelValue)
@@ -633,7 +633,7 @@ func (stmt *Statement) Changed(fields ...string) bool {
 				for destValue.Kind() == reflect.Ptr {
 					destValue = destValue.Elem()
 				}
-
+				
 				changedValue, zero := field.ValueOf(stmt.Context, destValue)
 				if v {
 					return !utils.AssertEqual(changedValue, fieldValue)
@@ -643,7 +643,7 @@ func (stmt *Statement) Changed(fields ...string) bool {
 		}
 		return false
 	}
-
+	
 	if len(fields) == 0 {
 		for _, field := range stmt.Schema.FieldsByDBName {
 			if changed(field) {
@@ -659,7 +659,7 @@ func (stmt *Statement) Changed(fields ...string) bool {
 			}
 		}
 	}
-
+	
 	return false
 }
 
@@ -669,7 +669,7 @@ var nameMatcher = regexp.MustCompile(`^(?:\W?(\w+?)\W?\.)?\W?(\w+?)\W?$`)
 func (stmt *Statement) SelectAndOmitColumns(requireCreate, requireUpdate bool) (map[string]bool, bool) {
 	results := map[string]bool{}
 	notRestricted := false
-
+	
 	processColumn := func(column string, result bool) {
 		if stmt.Schema == nil {
 			results[column] = result
@@ -696,24 +696,24 @@ func (stmt *Statement) SelectAndOmitColumns(requireCreate, requireUpdate bool) (
 			results[column] = result
 		}
 	}
-
+	
 	// select columns
 	for _, column := range stmt.Selects {
 		processColumn(column, true)
 	}
-
+	
 	// omit columns
 	for _, column := range stmt.Omits {
 		processColumn(column, false)
 	}
-
+	
 	if stmt.Schema != nil {
 		for _, field := range stmt.Schema.FieldsByName {
 			name := field.DBName
 			if name == "" {
 				name = field.Name
 			}
-
+			
 			if requireCreate && !field.Creatable {
 				results[name] = false
 			} else if requireUpdate && !field.Updatable {
@@ -721,6 +721,6 @@ func (stmt *Statement) SelectAndOmitColumns(requireCreate, requireUpdate bool) (
 			}
 		}
 	}
-
+	
 	return results, !notRestricted && len(stmt.Selects) > 0
 }

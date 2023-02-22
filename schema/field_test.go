@@ -7,10 +7,10 @@ import (
 	"sync"
 	"testing"
 	"time"
-
-	"gorm.io/gorm"
-	"gorm.io/gorm/schema"
-	"gorm.io/gorm/utils/tests"
+	
+	"github.com/gozelle/gorm"
+	"github.com/gozelle/gorm/schema"
+	"github.com/gozelle/gorm/utils/tests"
 )
 
 func TestFieldValuerAndSetter(t *testing.T) {
@@ -30,7 +30,7 @@ func TestFieldValuerAndSetter(t *testing.T) {
 		}
 		reflectValue = reflect.ValueOf(&user)
 	)
-
+	
 	// test valuer
 	values := map[string]interface{}{
 		"name":       user.Name,
@@ -43,7 +43,7 @@ func TestFieldValuerAndSetter(t *testing.T) {
 		"active":     true,
 	}
 	checkField(t, userSchema, reflectValue, values)
-
+	
 	var f *bool
 	// test setter
 	newValues := map[string]interface{}{
@@ -56,7 +56,7 @@ func TestFieldValuerAndSetter(t *testing.T) {
 		"birthday":   time.Now(),
 		"active":     f,
 	}
-
+	
 	for k, v := range newValues {
 		if err := userSchema.FieldsByDBName[k].Set(context.Background(), reflectValue, v); err != nil {
 			t.Errorf("no error should happen when assign value to field %v, but got %v", k, err)
@@ -65,7 +65,7 @@ func TestFieldValuerAndSetter(t *testing.T) {
 	newValues["updated_at"] = time.Time{}
 	newValues["active"] = false
 	checkField(t, userSchema, reflectValue, newValues)
-
+	
 	// test valuer and other type
 	age := myint(10)
 	var nilTime *time.Time
@@ -79,7 +79,7 @@ func TestFieldValuerAndSetter(t *testing.T) {
 		"birthday":   mytime(time.Now()),
 		"active":     mybool(true),
 	}
-
+	
 	for k, v := range newValues2 {
 		if err := userSchema.FieldsByDBName[k].Set(context.Background(), reflectValue, v); err != nil {
 			t.Errorf("no error should happen when assign value to field %v, but got %v", k, err)
@@ -108,7 +108,7 @@ func TestPointerFieldValuerAndSetter(t *testing.T) {
 		}
 		reflectValue = reflect.ValueOf(&user)
 	)
-
+	
 	// test valuer
 	values := map[string]interface{}{
 		"name":       user.Name,
@@ -120,7 +120,7 @@ func TestPointerFieldValuerAndSetter(t *testing.T) {
 		"active":     true,
 	}
 	checkField(t, userSchema, reflectValue, values)
-
+	
 	// test setter
 	newValues := map[string]interface{}{
 		"name":       "valuer_and_setter_2",
@@ -131,14 +131,14 @@ func TestPointerFieldValuerAndSetter(t *testing.T) {
 		"birthday":   time.Now(),
 		"active":     false,
 	}
-
+	
 	for k, v := range newValues {
 		if err := userSchema.FieldsByDBName[k].Set(context.Background(), reflectValue, v); err != nil {
 			t.Errorf("no error should happen when assign value to field %v, but got %v", k, err)
 		}
 	}
 	checkField(t, userSchema, reflectValue, newValues)
-
+	
 	// test valuer and other type
 	age2 := myint(10)
 	newValues2 := map[string]interface{}{
@@ -150,7 +150,7 @@ func TestPointerFieldValuerAndSetter(t *testing.T) {
 		"birthday":   mytime(time.Now()),
 		"active":     mybool(true),
 	}
-
+	
 	for k, v := range newValues2 {
 		if err := userSchema.FieldsByDBName[k].Set(context.Background(), reflectValue, v); err != nil {
 			t.Errorf("no error should happen when assign value to field %v, but got %v", k, err)
@@ -176,7 +176,7 @@ func TestAdvancedDataTypeValuerAndSetter(t *testing.T) {
 		}
 		reflectValue = reflect.ValueOf(&user)
 	)
-
+	
 	// test valuer
 	values := map[string]interface{}{
 		"id":            user.ID,
@@ -188,7 +188,7 @@ func TestAdvancedDataTypeValuerAndSetter(t *testing.T) {
 		"admin":         user.Admin,
 	}
 	checkField(t, userSchema, reflectValue, values)
-
+	
 	// test setter
 	newDeletedAt := mytime(time.Now())
 	newIsAdmin := mybool(true)
@@ -201,14 +201,14 @@ func TestAdvancedDataTypeValuerAndSetter(t *testing.T) {
 		"active":        mybool(false),
 		"admin":         &newIsAdmin,
 	}
-
+	
 	for k, v := range newValues {
 		if err := userSchema.FieldsByDBName[k].Set(context.Background(), reflectValue, v); err != nil {
 			t.Errorf("no error should happen when assign value to field %v, but got %v", k, err)
 		}
 	}
 	checkField(t, userSchema, reflectValue, newValues)
-
+	
 	newValues2 := map[string]interface{}{
 		"id":            5,
 		"name":          name + "rename2",
@@ -218,7 +218,7 @@ func TestAdvancedDataTypeValuerAndSetter(t *testing.T) {
 		"active":        true,
 		"admin":         false,
 	}
-
+	
 	for k, v := range newValues2 {
 		if err := userSchema.FieldsByDBName[k].Set(context.Background(), reflectValue, v); err != nil {
 			t.Errorf("no error should happen when assign value to field %v, but got %v", k, err)
@@ -244,7 +244,7 @@ func TestParseFieldWithPermission(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to parse user with permission, got error %v", err)
 	}
-
+	
 	fields := []*schema.Field{
 		{Name: "ID", DBName: "id", BindNames: []string{"ID"}, DataType: schema.Uint, PrimaryKey: true, Size: 64, Creatable: true, Updatable: true, Readable: true, HasDefaultValue: true, AutoIncrement: true},
 		{Name: "Name", DBName: "", BindNames: []string{"Name"}, DataType: "", Tag: `gorm:"-"`, Creatable: false, Updatable: false, Readable: false},
@@ -256,7 +256,7 @@ func TestParseFieldWithPermission(t *testing.T) {
 		{Name: "Name7", DBName: "name7", BindNames: []string{"Name7"}, DataType: schema.String, Tag: `gorm:"->:false;<-:create,update"`, Creatable: true, Updatable: true, Readable: false},
 		{Name: "Name8", DBName: "name8", BindNames: []string{"Name8"}, DataType: schema.String, Tag: `gorm:"->;-:migration"`, Creatable: false, Updatable: false, Readable: true, IgnoreMigration: true},
 	}
-
+	
 	for _, f := range fields {
 		checkSchemaField(t, user, f, func(f *schema.Field) {})
 	}
@@ -280,7 +280,7 @@ type (
 	STRING  string
 	TIME    time.Time
 	BYTES   []byte
-
+	
 	TypeAlias struct {
 		ID
 		INT     `gorm:"column:fint"`
@@ -307,7 +307,7 @@ func TestTypeAliasField(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to parse TypeAlias with permission, got error %v", err)
 	}
-
+	
 	fields := []*schema.Field{
 		{Name: "ID", DBName: "id", BindNames: []string{"ID"}, DataType: schema.Int, Creatable: true, Updatable: true, Readable: true, Size: 64, PrimaryKey: true, HasDefaultValue: true, AutoIncrement: true},
 		{Name: "INT", DBName: "fint", BindNames: []string{"INT"}, DataType: schema.Int, Creatable: true, Updatable: true, Readable: true, Size: 64, Tag: `gorm:"column:fint"`},
@@ -327,7 +327,7 @@ func TestTypeAliasField(t *testing.T) {
 		{Name: "TIME", DBName: "ftime", BindNames: []string{"TIME"}, DataType: schema.Time, Creatable: true, Updatable: true, Readable: true, Tag: `gorm:"column:ftime"`},
 		{Name: "BYTES", DBName: "fbytes", BindNames: []string{"BYTES"}, DataType: schema.Bytes, Creatable: true, Updatable: true, Readable: true, Tag: `gorm:"column:fbytes"`},
 	}
-
+	
 	for _, f := range fields {
 		checkSchemaField(t, alias, f, func(f *schema.Field) {})
 	}

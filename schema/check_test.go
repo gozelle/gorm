@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"sync"
 	"testing"
-
-	"gorm.io/gorm/schema"
+	
+	"github.com/gozelle/gorm/schema"
 )
 
 type UserCheck struct {
@@ -19,7 +19,7 @@ func TestParseCheck(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to parse user check, got error %v", err)
 	}
-
+	
 	results := map[string]schema.Check{
 		"name_checker": {
 			Name:       "name_checker",
@@ -34,15 +34,15 @@ func TestParseCheck(t *testing.T) {
 			Constraint: "name <> 'jinzhu'",
 		},
 	}
-
+	
 	checks := user.ParseCheckConstraints()
-
+	
 	for k, result := range results {
 		v, ok := checks[k]
 		if !ok {
 			t.Errorf("Failed to found check %v from parsed checks %+v", k, checks)
 		}
-
+		
 		for _, name := range []string{"Name", "Constraint"} {
 			if reflect.ValueOf(result).FieldByName(name).Interface() != reflect.ValueOf(v).FieldByName(name).Interface() {
 				t.Errorf(

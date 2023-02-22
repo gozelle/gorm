@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 	"unicode"
-
-	"gorm.io/gorm/utils"
+	
+	"github.com/gozelle/gorm/utils"
 )
 
 const (
@@ -38,7 +38,7 @@ func ExplainSQL(sql string, numericPlaceholder *regexp.Regexp, escaper string, a
 		convertParams func(interface{}, int)
 		vars          = make([]string, len(avars))
 	)
-
+	
 	convertParams = func(v interface{}, idx int) {
 		switch v := v.(type) {
 		case bool:
@@ -117,15 +117,15 @@ func ExplainSQL(sql string, numericPlaceholder *regexp.Regexp, escaper string, a
 			}
 		}
 	}
-
+	
 	for idx, v := range avars {
 		convertParams(v, idx)
 	}
-
+	
 	if numericPlaceholder == nil {
 		var idx int
 		var newSQL strings.Builder
-
+		
 		for _, v := range []byte(sql) {
 			if v == '?' {
 				if len(vars) > idx {
@@ -136,15 +136,15 @@ func ExplainSQL(sql string, numericPlaceholder *regexp.Regexp, escaper string, a
 			}
 			newSQL.WriteByte(v)
 		}
-
+		
 		sql = newSQL.String()
 	} else {
 		sql = numericPlaceholder.ReplaceAllString(sql, "$$$1$$")
-
+		
 		sql = numericPlaceholderRe.ReplaceAllStringFunc(sql, func(v string) string {
 			num := v[1 : len(v)-1]
 			n, _ := strconv.Atoi(num)
-
+			
 			// position var start from 1 ($1, $2)
 			n -= 1
 			if n >= 0 && n <= len(vars)-1 {
@@ -153,6 +153,6 @@ func ExplainSQL(sql string, numericPlaceholder *regexp.Regexp, escaper string, a
 			return v
 		})
 	}
-
+	
 	return sql
 }

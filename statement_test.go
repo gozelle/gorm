@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
-
-	"gorm.io/gorm/clause"
+	
+	"github.com/gozelle/gorm/clause"
 )
 
 func TestWhereCloneCorruption(t *testing.T) {
@@ -18,7 +18,7 @@ func TestWhereCloneCorruption(t *testing.T) {
 					Exprs: s.BuildCondition(fmt.Sprintf("where%d", w)),
 				})
 			}
-
+			
 			s1 := s.clone()
 			s1.AddClause(clause.Where{
 				Exprs: s.BuildCondition("FINAL1"),
@@ -27,7 +27,7 @@ func TestWhereCloneCorruption(t *testing.T) {
 			s2.AddClause(clause.Where{
 				Exprs: s.BuildCondition("FINAL2"),
 			})
-
+			
 			if reflect.DeepEqual(s1.Clauses["WHERE"], s2.Clauses["WHERE"]) {
 				t.Errorf("Where conditions should be different")
 			}

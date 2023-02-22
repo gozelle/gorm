@@ -6,9 +6,9 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
-
-	"gorm.io/gorm/clause"
-	"gorm.io/gorm/utils"
+	
+	"github.com/gozelle/gorm/clause"
+	"github.com/gozelle/gorm/utils"
 )
 
 var embeddedCacheKey = "embedded_cache_store"
@@ -16,7 +16,7 @@ var embeddedCacheKey = "embedded_cache_store"
 func ParseTagSetting(str string, sep string) map[string]string {
 	settings := map[string]string{}
 	names := strings.Split(str, sep)
-
+	
 	for i := 0; i < len(names); i++ {
 		j := i
 		if len(names[j]) > 0 {
@@ -30,17 +30,17 @@ func ParseTagSetting(str string, sep string) map[string]string {
 				}
 			}
 		}
-
+		
 		values := strings.Split(names[j], ":")
 		k := strings.TrimSpace(strings.ToUpper(values[0]))
-
+		
 		if len(values) >= 2 {
 			settings[k] = strings.Join(values[1:], ":")
 		} else if k != "" {
 			settings[k] = k
 		}
 	}
-
+	
 	return settings
 }
 
@@ -72,7 +72,7 @@ func appendSettingFromTag(tag reflect.StructTag, value string) reflect.StructTag
 func GetRelationsValues(ctx context.Context, reflectValue reflect.Value, rels []*Relationship) (reflectResults reflect.Value) {
 	for _, rel := range rels {
 		reflectResults = reflect.MakeSlice(reflect.SliceOf(reflect.PtrTo(rel.FieldSchema.ModelType)), 0, 1)
-
+		
 		appendToResults := func(value reflect.Value) {
 			if _, isZero := rel.Field.ValueOf(ctx, value); !isZero {
 				result := reflect.Indirect(rel.Field.ReflectValueOf(ctx, value))
@@ -90,7 +90,7 @@ func GetRelationsValues(ctx context.Context, reflectValue reflect.Value, rels []
 				}
 			}
 		}
-
+		
 		switch reflectValue.Kind() {
 		case reflect.Struct:
 			appendToResults(reflectValue)
@@ -99,10 +99,10 @@ func GetRelationsValues(ctx context.Context, reflectValue reflect.Value, rels []
 				appendToResults(reflectValue.Index(i))
 			}
 		}
-
+		
 		reflectValue = reflectResults
 	}
-
+	
 	return
 }
 
@@ -114,20 +114,20 @@ func GetIdentityFieldValuesMap(ctx context.Context, reflectValue reflect.Value, 
 		loaded        = map[interface{}]bool{}
 		notZero, zero bool
 	)
-
+	
 	switch reflectValue.Kind() {
 	case reflect.Struct:
 		results = [][]interface{}{make([]interface{}, len(fields))}
-
+		
 		for idx, field := range fields {
 			results[0][idx], zero = field.ValueOf(ctx, reflectValue)
 			notZero = notZero || !zero
 		}
-
+		
 		if !notZero {
 			return nil, nil
 		}
-
+		
 		dataResults[utils.ToStringKey(results[0]...)] = []reflect.Value{reflectValue}
 	case reflect.Slice, reflect.Array:
 		for i := 0; i < reflectValue.Len(); i++ {
@@ -136,19 +136,19 @@ func GetIdentityFieldValuesMap(ctx context.Context, reflectValue reflect.Value, 
 			if elem.Kind() != reflect.Ptr && elem.CanAddr() {
 				elemKey = elem.Addr().Interface()
 			}
-
+			
 			if _, ok := loaded[elemKey]; ok {
 				continue
 			}
 			loaded[elemKey] = true
-
+			
 			fieldValues := make([]interface{}, len(fields))
 			notZero = false
 			for idx, field := range fields {
 				fieldValues[idx], zero = field.ValueOf(ctx, elem)
 				notZero = notZero || !zero
 			}
-
+			
 			if notZero {
 				dataKey := utils.ToStringKey(fieldValues...)
 				if _, ok := dataResults[dataKey]; !ok {
@@ -160,7 +160,7 @@ func GetIdentityFieldValuesMap(ctx context.Context, reflectValue reflect.Value, 
 			}
 		}
 	}
-
+	
 	return dataResults, results
 }
 
@@ -168,7 +168,7 @@ func GetIdentityFieldValuesMap(ctx context.Context, reflectValue reflect.Value, 
 func GetIdentityFieldValuesMapFromValues(ctx context.Context, values []interface{}, fields []*Field) (map[string][]reflect.Value, [][]interface{}) {
 	resultsMap := map[string][]reflect.Value{}
 	results := [][]interface{}{}
-
+	
 	for _, v := range values {
 		rm, rs := GetIdentityFieldValuesMap(ctx, reflect.Indirect(reflect.ValueOf(v)), fields)
 		for k, v := range rm {
@@ -186,19 +186,19 @@ func ToQueryValues(table string, foreignKeys []string, foreignValues [][]interfa
 		for idx, r := range foreignValues {
 			queryValues[idx] = r[0]
 		}
-
+		
 		return clause.Column{Table: table, Name: foreignKeys[0]}, queryValues
 	}
-
+	
 	columns := make([]clause.Column, len(foreignKeys))
 	for idx, key := range foreignKeys {
 		columns[idx] = clause.Column{Table: table, Name: key}
 	}
-
+	
 	for idx, r := range foreignValues {
 		queryValues[idx] = r
 	}
-
+	
 	return columns, queryValues
 }
 

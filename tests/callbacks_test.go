@@ -6,8 +6,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
-
-	"gorm.io/gorm"
+	
+	"github.com/gozelle/gorm"
 )
 
 func assertCallbacks(v interface{}, fnames []string) (result bool, msg string) {
@@ -15,11 +15,11 @@ func assertCallbacks(v interface{}, fnames []string) (result bool, msg string) {
 		got   []string
 		funcs = reflect.ValueOf(v).Elem().FieldByName("fns")
 	)
-
+	
 	for i := 0; i < funcs.Len(); i++ {
 		got = append(got, getFuncName(funcs.Index(i)))
 	}
-
+	
 	return fmt.Sprint(got) == fmt.Sprint(fnames), fmt.Sprintf("expects %v, got %v", fnames, got)
 }
 
@@ -28,7 +28,7 @@ func getFuncName(fc interface{}) string {
 	if !ok {
 		reflectValue = reflect.ValueOf(fc)
 	}
-
+	
 	fnames := strings.Split(runtime.FuncForPC(reflectValue.Pointer()).Name(), ".")
 	return fnames[len(fnames)-1]
 }
@@ -51,7 +51,7 @@ func TestCallbacks(t *testing.T) {
 		match   func(*gorm.DB) bool
 		h       func(*gorm.DB)
 	}
-
+	
 	datas := []struct {
 		callbacks []callback
 		err       string
@@ -110,14 +110,14 @@ func TestCallbacks(t *testing.T) {
 			results:   []string{"c5", "c1", "c2", "c3", "c4"},
 		},
 	}
-
+	
 	for idx, data := range datas {
 		db, err := gorm.Open(nil, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
 		callbacks := db.Callback()
-
+		
 		for _, c := range data.callbacks {
 			var v interface{} = callbacks.Create()
 			callMethod := func(s interface{}, name string, args ...interface{}) {
@@ -125,29 +125,29 @@ func TestCallbacks(t *testing.T) {
 				for _, arg := range args {
 					argValues = append(argValues, reflect.ValueOf(arg))
 				}
-
+				
 				results := reflect.ValueOf(s).MethodByName(name).Call(argValues)
 				if len(results) > 0 {
 					v = results[0].Interface()
 				}
 			}
-
+			
 			if c.name == "" {
 				c.name = getFuncName(c.h)
 			}
-
+			
 			if c.before != "" {
 				callMethod(v, "Before", c.before)
 			}
-
+			
 			if c.after != "" {
 				callMethod(v, "After", c.after)
 			}
-
+			
 			if c.match != nil {
 				callMethod(v, "Match", c.match)
 			}
-
+			
 			if c.remove {
 				callMethod(v, "Remove", c.name)
 			} else if c.replace {
@@ -155,18 +155,18 @@ func TestCallbacks(t *testing.T) {
 			} else {
 				callMethod(v, "Register", c.name, c.h)
 			}
-
+			
 			if e, ok := v.(error); !ok || e != nil {
 				err = e
 			}
 		}
-
+		
 		if len(data.err) > 0 && err == nil {
 			t.Errorf("callbacks tests #%v should got error %v, but not", idx+1, data.err)
 		} else if len(data.err) == 0 && err != nil {
 			t.Errorf("callbacks tests #%v should not got error, but got %v", idx+1, err)
 		}
-
+		
 		if ok, msg := assertCallbacks(callbacks.Create(), data.results); !ok {
 			t.Errorf("callbacks tests #%v failed, got %v", idx+1, msg)
 		}
@@ -176,31 +176,31 @@ func TestCallbacks(t *testing.T) {
 func TestPluginCallbacks(t *testing.T) {
 	db, _ := gorm.Open(nil, nil)
 	createCallback := db.Callback().Create()
-
+	
 	createCallback.Before("*").Register("plugin_1_fn1", c1)
 	createCallback.After("*").Register("plugin_1_fn2", c2)
-
+	
 	if ok, msg := assertCallbacks(createCallback, []string{"c1", "c2"}); !ok {
 		t.Errorf("callbacks tests failed, got %v", msg)
 	}
-
+	
 	// plugin 2
 	createCallback.Before("*").Register("plugin_2_fn1", c3)
 	if ok, msg := assertCallbacks(createCallback, []string{"c3", "c1", "c2"}); !ok {
 		t.Errorf("callbacks tests failed, got %v", msg)
 	}
-
+	
 	createCallback.After("*").Register("plugin_2_fn2", c4)
 	if ok, msg := assertCallbacks(createCallback, []string{"c3", "c1", "c2", "c4"}); !ok {
 		t.Errorf("callbacks tests failed, got %v", msg)
 	}
-
+	
 	// plugin 3
 	createCallback.Before("*").Register("plugin_3_fn1", c5)
 	if ok, msg := assertCallbacks(createCallback, []string{"c5", "c3", "c1", "c2", "c4"}); !ok {
 		t.Errorf("callbacks tests failed, got %v", msg)
 	}
-
+	
 	createCallback.After("*").Register("plugin_3_fn2", c6)
 	if ok, msg := assertCallbacks(createCallback, []string{"c5", "c3", "c1", "c2", "c4", "c6"}); !ok {
 		t.Errorf("callbacks tests failed, got %v", msg)

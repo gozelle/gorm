@@ -1,7 +1,7 @@
 package callbacks
 
 import (
-	"gorm.io/gorm"
+	"github.com/gozelle/gorm"
 )
 
 func BeginTransaction(db *gorm.DB) {
@@ -25,7 +25,7 @@ func CommitOrRollbackTransaction(db *gorm.DB) {
 			} else {
 				db.Commit()
 			}
-
+			
 			db.Statement.ConnPool = db.ConnPool
 		}
 	}

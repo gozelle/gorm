@@ -3,9 +3,9 @@ package schema_test
 import (
 	"sync"
 	"testing"
-
-	"gorm.io/gorm"
-	"gorm.io/gorm/schema"
+	
+	"github.com/gozelle/gorm"
+	"github.com/gozelle/gorm/schema"
 )
 
 func checkStructRelation(t *testing.T, data interface{}, relations ...Relation) {
@@ -23,13 +23,13 @@ func TestBelongsToOverrideForeignKey(t *testing.T) {
 		gorm.Model
 		Name string
 	}
-
+	
 	type User struct {
 		gorm.Model
 		Profile      Profile `gorm:"ForeignKey:ProfileRefer"`
 		ProfileRefer int
 	}
-
+	
 	checkStructRelation(t, &User{}, Relation{
 		Name: "Profile", Type: schema.BelongsTo, Schema: "User", FieldSchema: "Profile",
 		References: []Reference{{"ID", "Profile", "ProfileRefer", "User", "", false}},
@@ -42,13 +42,13 @@ func TestBelongsToOverrideReferences(t *testing.T) {
 		Refer string
 		Name  string
 	}
-
+	
 	type User struct {
 		gorm.Model
 		Profile   Profile `gorm:"ForeignKey:ProfileID;References:Refer"`
 		ProfileID int
 	}
-
+	
 	checkStructRelation(t, &User{}, Relation{
 		Name: "Profile", Type: schema.BelongsTo, Schema: "User", FieldSchema: "Profile",
 		References: []Reference{{"Refer", "Profile", "ProfileID", "User", "", false}},
@@ -61,13 +61,13 @@ func TestBelongsToWithOnlyReferences(t *testing.T) {
 		Refer string
 		Name  string
 	}
-
+	
 	type User struct {
 		gorm.Model
 		Profile      Profile `gorm:"References:Refer"`
 		ProfileRefer int
 	}
-
+	
 	checkStructRelation(t, &User{}, Relation{
 		Name: "Profile", Type: schema.BelongsTo, Schema: "User", FieldSchema: "Profile",
 		References: []Reference{{"Refer", "Profile", "ProfileRefer", "User", "", false}},
@@ -80,13 +80,13 @@ func TestBelongsToWithOnlyReferences2(t *testing.T) {
 		Refer string
 		Name  string
 	}
-
+	
 	type User struct {
 		gorm.Model
 		Profile   Profile `gorm:"References:Refer"`
 		ProfileID int
 	}
-
+	
 	checkStructRelation(t, &User{}, Relation{
 		Name: "Profile", Type: schema.BelongsTo, Schema: "User", FieldSchema: "Profile",
 		References: []Reference{{"Refer", "Profile", "ProfileID", "User", "", false}},
@@ -100,7 +100,7 @@ func TestSelfReferentialBelongsTo(t *testing.T) {
 		CreatorID *int32
 		Creator   *User
 	}
-
+	
 	checkStructRelation(t, &User{}, Relation{
 		Name: "Creator", Type: schema.BelongsTo, Schema: "User", FieldSchema: "User",
 		References: []Reference{{"ID", "User", "CreatorID", "User", "", false}},
@@ -114,7 +114,7 @@ func TestSelfReferentialBelongsToOverrideReferences(t *testing.T) {
 		CreatedBy *int32
 		Creator   *User `gorm:"foreignKey:CreatedBy;references:ID"`
 	}
-
+	
 	checkStructRelation(t, &User{}, Relation{
 		Name: "Creator", Type: schema.BelongsTo, Schema: "User", FieldSchema: "User",
 		References: []Reference{{"ID", "User", "CreatedBy", "User", "", false}},
@@ -127,12 +127,12 @@ func TestHasOneOverrideForeignKey(t *testing.T) {
 		Name      string
 		UserRefer uint
 	}
-
+	
 	type User struct {
 		gorm.Model
 		Profile Profile `gorm:"ForeignKey:UserRefer"`
 	}
-
+	
 	checkStructRelation(t, &User{}, Relation{
 		Name: "Profile", Type: schema.HasOne, Schema: "User", FieldSchema: "Profile",
 		References: []Reference{{"ID", "User", "UserRefer", "Profile", "", true}},
@@ -145,13 +145,13 @@ func TestHasOneOverrideReferences(t *testing.T) {
 		Name   string
 		UserID uint
 	}
-
+	
 	type User struct {
 		gorm.Model
 		Refer   string
 		Profile Profile `gorm:"ForeignKey:UserID;References:Refer"`
 	}
-
+	
 	checkStructRelation(t, &User{}, Relation{
 		Name: "Profile", Type: schema.HasOne, Schema: "User", FieldSchema: "Profile",
 		References: []Reference{{"Refer", "User", "UserID", "Profile", "", true}},
@@ -163,13 +163,13 @@ func TestHasOneOverrideReferences2(t *testing.T) {
 		gorm.Model
 		Name string
 	}
-
+	
 	type User struct {
 		gorm.Model
 		ProfileID uint     `gorm:"column:profile_id"`
 		Profile   *Profile `gorm:"foreignKey:ID;references:ProfileID"`
 	}
-
+	
 	checkStructRelation(t, &User{}, Relation{
 		Name: "Profile", Type: schema.HasOne, Schema: "User", FieldSchema: "Profile",
 		References: []Reference{{"ProfileID", "User", "ID", "Profile", "", true}},
@@ -182,13 +182,13 @@ func TestHasOneWithOnlyReferences(t *testing.T) {
 		Name      string
 		UserRefer uint
 	}
-
+	
 	type User struct {
 		gorm.Model
 		Refer   string
 		Profile Profile `gorm:"References:Refer"`
 	}
-
+	
 	checkStructRelation(t, &User{}, Relation{
 		Name: "Profile", Type: schema.HasOne, Schema: "User", FieldSchema: "Profile",
 		References: []Reference{{"Refer", "User", "UserRefer", "Profile", "", true}},
@@ -201,13 +201,13 @@ func TestHasOneWithOnlyReferences2(t *testing.T) {
 		Name   string
 		UserID uint
 	}
-
+	
 	type User struct {
 		gorm.Model
 		Refer   string
 		Profile Profile `gorm:"References:Refer"`
 	}
-
+	
 	checkStructRelation(t, &User{}, Relation{
 		Name: "Profile", Type: schema.HasOne, Schema: "User", FieldSchema: "Profile",
 		References: []Reference{{"Refer", "User", "UserID", "Profile", "", true}},
@@ -220,12 +220,12 @@ func TestHasManyOverrideForeignKey(t *testing.T) {
 		Name      string
 		UserRefer uint
 	}
-
+	
 	type User struct {
 		gorm.Model
 		Profile []Profile `gorm:"ForeignKey:UserRefer"`
 	}
-
+	
 	checkStructRelation(t, &User{}, Relation{
 		Name: "Profile", Type: schema.HasMany, Schema: "User", FieldSchema: "Profile",
 		References: []Reference{{"ID", "User", "UserRefer", "Profile", "", true}},
@@ -238,13 +238,13 @@ func TestHasManyOverrideReferences(t *testing.T) {
 		Name   string
 		UserID uint
 	}
-
+	
 	type User struct {
 		gorm.Model
 		Refer   string
 		Profile []Profile `gorm:"ForeignKey:UserID;References:Refer"`
 	}
-
+	
 	checkStructRelation(t, &User{}, Relation{
 		Name: "Profile", Type: schema.HasMany, Schema: "User", FieldSchema: "Profile",
 		References: []Reference{{"Refer", "User", "UserID", "Profile", "", true}},
@@ -257,14 +257,14 @@ func TestMany2ManyOverrideForeignKeyAndReferences(t *testing.T) {
 		Name      string
 		UserRefer uint
 	}
-
+	
 	type User struct {
 		gorm.Model
 		Profiles  []Profile `gorm:"many2many:user_profiles;ForeignKey:Refer;JoinForeignKey:UserReferID;References:UserRefer;JoinReferences:ProfileRefer"`
 		Profiles2 []Profile `gorm:"many2many:user_profiles2;ForeignKey:refer;JoinForeignKey:user_refer_id;References:user_refer;JoinReferences:profile_refer"`
 		Refer     uint
 	}
-
+	
 	checkStructRelation(t, &User{}, Relation{
 		Name: "Profiles", Type: schema.Many2Many, Schema: "User", FieldSchema: "Profile",
 		JoinTable: JoinTable{Name: "user_profiles", Table: "user_profiles"},
@@ -288,13 +288,13 @@ func TestMany2ManyOverrideForeignKey(t *testing.T) {
 		Name      string
 		UserRefer uint
 	}
-
+	
 	type User struct {
 		gorm.Model
 		Profiles []Profile `gorm:"many2many:user_profiles;ForeignKey:Refer;References:UserRefer"`
 		Refer    uint
 	}
-
+	
 	checkStructRelation(t, &User{}, Relation{
 		Name: "Profiles", Type: schema.Many2Many, Schema: "User", FieldSchema: "Profile",
 		JoinTable: JoinTable{Name: "user_profiles", Table: "user_profiles"},
@@ -312,14 +312,14 @@ func TestMany2ManySharedForeignKey(t *testing.T) {
 		Kind         string
 		ProfileRefer uint
 	}
-
+	
 	type User struct {
 		gorm.Model
 		Profiles []Profile `gorm:"many2many:user_profiles;foreignKey:Refer,Kind;joinForeignKey:UserRefer,Kind;References:ProfileRefer,Kind;joinReferences:ProfileR,Kind"`
 		Kind     string
 		Refer    uint
 	}
-
+	
 	checkStructRelation(t, &User{}, Relation{
 		Name: "Profiles", Type: schema.Many2Many, Schema: "User", FieldSchema: "Profile",
 		JoinTable: JoinTable{Name: "user_profiles", Table: "user_profiles"},
@@ -338,13 +338,13 @@ func TestMany2ManyOverrideJoinForeignKey(t *testing.T) {
 		Name      string
 		UserRefer uint
 	}
-
+	
 	type User struct {
 		gorm.Model
 		Profiles []Profile `gorm:"many2many:user_profile;JoinForeignKey:UserReferID;JoinReferences:ProfileRefer"`
 		Refer    uint
 	}
-
+	
 	checkStructRelation(t, &User{}, Relation{
 		Name: "Profiles", Type: schema.Many2Many, Schema: "User", FieldSchema: "Profile",
 		JoinTable: JoinTable{Name: "user_profile", Table: "user_profile"},
@@ -361,13 +361,13 @@ func TestBuildReadonlyMany2ManyRelation(t *testing.T) {
 		Name      string
 		UserRefer uint
 	}
-
+	
 	type User struct {
 		gorm.Model
 		Profiles []Profile `gorm:"->;many2many:user_profile;JoinForeignKey:UserReferID;JoinReferences:ProfileRefer"`
 		Refer    uint
 	}
-
+	
 	checkStructRelation(t, &User{}, Relation{
 		Name: "Profiles", Type: schema.Many2Many, Schema: "User", FieldSchema: "Profile",
 		JoinTable: JoinTable{Name: "user_profile", Table: "user_profile"},
@@ -384,7 +384,7 @@ func TestMany2ManyWithMultiPrimaryKeys(t *testing.T) {
 		Locale string `gorm:"primary_key"`
 		Value  string
 	}
-
+	
 	type Blog struct {
 		ID         uint   `gorm:"primary_key"`
 		Locale     string `gorm:"primary_key"`
@@ -394,7 +394,7 @@ func TestMany2ManyWithMultiPrimaryKeys(t *testing.T) {
 		SharedTags []Tag `gorm:"many2many:shared_blog_tags;ForeignKey:id;References:id"`
 		LocaleTags []Tag `gorm:"many2many:locale_blog_tags;ForeignKey:id,locale;References:id"`
 	}
-
+	
 	checkStructRelation(t, &Blog{},
 		Relation{
 			Name: "Tags", Type: schema.Many2Many, Schema: "Blog", FieldSchema: "Tag",
@@ -430,13 +430,13 @@ func TestMultipleMany2Many(t *testing.T) {
 	type Thing struct {
 		ID int
 	}
-
+	
 	type Person struct {
 		ID       int
 		Likes    []Thing `gorm:"many2many:likes"`
 		Dislikes []Thing `gorm:"many2many:dislikes"`
 	}
-
+	
 	checkStructRelation(t, &Person{},
 		Relation{
 			Name: "Likes", Type: schema.Many2Many, Schema: "Person", FieldSchema: "Thing",
@@ -465,17 +465,17 @@ func TestSelfReferentialMany2Many(t *testing.T) {
 		Creators   []User      `gorm:"foreignKey:CreatedBy"`
 		AnotherPro interface{} `gorm:"-"`
 	}
-
+	
 	checkStructRelation(t, &User{}, Relation{
 		Name: "Creators", Type: schema.HasMany, Schema: "User", FieldSchema: "User",
 		References: []Reference{{"ID", "User", "CreatedBy", "User", "", true}},
 	})
-
+	
 	user, err := schema.Parse(&User{}, &sync.Map{}, schema.NamingStrategy{})
 	if err != nil {
 		t.Fatalf("failed to parse schema")
 	}
-
+	
 	relSchema := user.Relationships.Relations["Creators"].FieldSchema
 	if user != relSchema {
 		t.Fatalf("schema should be same, expects %p but got %p", user, relSchema)
@@ -499,16 +499,16 @@ func TestEmbeddedRelation(t *testing.T) {
 			{"ID", "CreatedUser", "CreatedByID", "CreatedUser", "", false},
 		},
 	})
-
+	
 	userSchema, err := schema.Parse(&CreatedUser{}, &sync.Map{}, schema.NamingStrategy{})
 	if err != nil {
 		t.Fatalf("failed to parse schema, got error %v", err)
 	}
-
+	
 	if len(userSchema.Relationships.Relations) != 1 {
 		t.Fatalf("expects 1 relations, but got %v", len(userSchema.Relationships.Relations))
 	}
-
+	
 	if createdByRel, ok := userSchema.Relationships.Relations["CreatedBy"]; ok {
 		if createdByRel.FieldSchema != userSchema {
 			t.Fatalf("expects same field schema, but got new %p, old %p", createdByRel.FieldSchema, userSchema)
@@ -522,14 +522,14 @@ func TestVariableRelation(t *testing.T) {
 	var result struct {
 		User
 	}
-
+	
 	checkStructRelation(t, &result, Relation{
 		Name: "Account", Type: schema.HasOne, Schema: "", FieldSchema: "Account",
 		References: []Reference{
 			{"ID", "", "UserID", "Account", "", true},
 		},
 	})
-
+	
 	checkStructRelation(t, &result, Relation{
 		Name: "Company", Type: schema.BelongsTo, Schema: "", FieldSchema: "Company",
 		References: []Reference{
@@ -544,14 +544,14 @@ func TestSameForeignKey(t *testing.T) {
 		Aux  string
 		UUID string
 	}
-
+	
 	type User struct {
 		gorm.Model
 		Name string
 		UUID string
 		Aux  *UserAux `gorm:"foreignkey:UUID;references:UUID"`
 	}
-
+	
 	checkStructRelation(t, &User{},
 		Relation{
 			Name: "Aux", Type: schema.HasOne, Schema: "User", FieldSchema: "UserAux",
@@ -568,14 +568,14 @@ func TestBelongsToSameForeignKey(t *testing.T) {
 		Name string
 		UUID string
 	}
-
+	
 	type UserAux struct {
 		gorm.Model
 		Aux  string
 		UUID string
 		User User `gorm:"ForeignKey:UUID;references:UUID;belongsTo"`
 	}
-
+	
 	checkStructRelation(t, &UserAux{},
 		Relation{
 			Name: "User", Type: schema.BelongsTo, Schema: "UserAux", FieldSchema: "User",
@@ -592,13 +592,13 @@ func TestHasOneWithSameForeignKey(t *testing.T) {
 		Name         string
 		ProfileRefer int // not used in relationship
 	}
-
+	
 	type User struct {
 		gorm.Model
 		Profile      Profile `gorm:"ForeignKey:ID;references:ProfileRefer"`
 		ProfileRefer int
 	}
-
+	
 	checkStructRelation(t, &User{}, Relation{
 		Name: "Profile", Type: schema.HasOne, Schema: "User", FieldSchema: "Profile",
 		References: []Reference{{"ProfileRefer", "User", "ID", "Profile", "", true}},
@@ -611,13 +611,13 @@ func TestHasManySameForeignKey(t *testing.T) {
 		Name      string
 		UserRefer uint
 	}
-
+	
 	type User struct {
 		gorm.Model
 		UserRefer uint
 		Profile   []Profile `gorm:"ForeignKey:UserRefer"`
 	}
-
+	
 	checkStructRelation(t, &User{}, Relation{
 		Name: "Profile", Type: schema.HasMany, Schema: "User", FieldSchema: "Profile",
 		References: []Reference{{"ID", "User", "UserRefer", "Profile", "", true}},
@@ -647,10 +647,10 @@ func TestParseConstraintNameWithSchemaQualifiedLongTableName(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to parse schema")
 	}
-
+	
 	expectedConstraintName := "fk_my_schema_a_very_very_very_very_very_very_very_very_l4db13eec"
 	constraint := s.Relationships.Relations["Author"].ParseConstraint()
-
+	
 	if constraint.Name != expectedConstraintName {
 		t.Fatalf(
 			"expected constraint name %s, got %s",

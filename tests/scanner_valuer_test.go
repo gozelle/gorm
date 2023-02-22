@@ -12,10 +12,10 @@ import (
 	"strconv"
 	"testing"
 	"time"
-
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
-	. "gorm.io/gorm/utils/tests"
+	
+	"github.com/gozelle/gorm"
+	"github.com/gozelle/gorm/clause"
+	. "github.com/gozelle/gorm/utils/tests"
 )
 
 func TestScannerValuer(t *testing.T) {
@@ -23,7 +23,7 @@ func TestScannerValuer(t *testing.T) {
 	if err := DB.Migrator().AutoMigrate(&ScannerValuerStruct{}); err != nil {
 		t.Fatalf("no error should happen when migrate scanner, valuer struct, got error %v", err)
 	}
-
+	
 	data := ScannerValuerStruct{
 		Name:     sql.NullString{String: "name", Valid: true},
 		Gender:   &sql.NullString{String: "M", Valid: true},
@@ -44,21 +44,21 @@ func TestScannerValuer(t *testing.T) {
 		ExampleStruct:    ExampleStruct{"name", "value1"},
 		ExampleStructPtr: &ExampleStruct{"name", "value2"},
 	}
-
+	
 	if err := DB.Create(&data).Error; err != nil {
 		t.Fatalf("No error should happened when create scanner valuer struct, but got %v", err)
 	}
-
+	
 	var result ScannerValuerStruct
-
+	
 	if err := DB.Find(&result, "id = ?", data.ID).Error; err != nil {
 		t.Fatalf("no error should happen when query scanner, valuer struct, but got %v", err)
 	}
-
+	
 	if result.ExampleStructPtr.Val != "value2" {
 		t.Errorf(`ExampleStructPtr.Val should equal to "value2", but got %v`, result.ExampleStructPtr.Val)
 	}
-
+	
 	if result.ExampleStruct.Val != "value1" {
 		t.Errorf(`ExampleStruct.Val should equal to "value1", but got %#v`, result.ExampleStruct)
 	}
@@ -70,7 +70,7 @@ func TestScannerValuerWithFirstOrCreate(t *testing.T) {
 	if err := DB.Migrator().AutoMigrate(&ScannerValuerStruct{}); err != nil {
 		t.Errorf("no error should happen when migrate scanner, valuer struct")
 	}
-
+	
 	data := ScannerValuerStruct{
 		Name:             sql.NullString{String: "name", Valid: true},
 		Gender:           &sql.NullString{String: "M", Valid: true},
@@ -78,33 +78,33 @@ func TestScannerValuerWithFirstOrCreate(t *testing.T) {
 		ExampleStruct:    ExampleStruct{"name", "value1"},
 		ExampleStructPtr: &ExampleStruct{"name", "value2"},
 	}
-
+	
 	var result ScannerValuerStruct
 	tx := DB.Where(data).FirstOrCreate(&result)
-
+	
 	if tx.RowsAffected != 1 {
 		t.Errorf("RowsAffected should be 1 after create some record")
 	}
-
+	
 	if tx.Error != nil {
 		t.Errorf("Should not raise any error, but got %v", tx.Error)
 	}
-
+	
 	AssertObjEqual(t, result, data, "Name", "Gender", "Age")
-
+	
 	if err := DB.Where(data).Assign(ScannerValuerStruct{Age: sql.NullInt64{Int64: 18, Valid: true}}).FirstOrCreate(&result).Error; err != nil {
 		t.Errorf("Should not raise any error, but got %v", err)
 	}
-
+	
 	if result.Age.Int64 != 18 {
 		t.Errorf("should update age to 18")
 	}
-
+	
 	var result2 ScannerValuerStruct
 	if err := DB.First(&result2, result.ID).Error; err != nil {
 		t.Errorf("got error %v when query with %v", err, result.ID)
 	}
-
+	
 	AssertObjEqual(t, result2, result, "ID", "CreatedAt", "UpdatedAt", "Name", "Gender", "Age")
 }
 
@@ -113,30 +113,30 @@ func TestInvalidValuer(t *testing.T) {
 	if err := DB.Migrator().AutoMigrate(&ScannerValuerStruct{}); err != nil {
 		t.Errorf("no error should happen when migrate scanner, valuer struct")
 	}
-
+	
 	data := ScannerValuerStruct{
 		Password:         EncryptedData("xpass1"),
 		ExampleStruct:    ExampleStruct{"name", "value1"},
 		ExampleStructPtr: &ExampleStruct{"name", "value2"},
 	}
-
+	
 	if err := DB.Create(&data).Error; err == nil {
 		t.Errorf("Should failed to create data with invalid data")
 	}
-
+	
 	data.Password = EncryptedData("pass1")
 	if err := DB.Create(&data).Error; err != nil {
 		t.Errorf("Should got no error when creating data, but got %v", err)
 	}
-
+	
 	if err := DB.Model(&data).Update("password", EncryptedData("xnewpass")).Error; err == nil {
 		t.Errorf("Should failed to update data with invalid data")
 	}
-
+	
 	if err := DB.Model(&data).Update("password", EncryptedData("newpass")).Error; err != nil {
 		t.Errorf("Should got no error update data with valid data, but got %v", err)
 	}
-
+	
 	AssertEqual(t, data.Password, EncryptedData("newpass"))
 }
 
@@ -169,14 +169,14 @@ func (data *EncryptedData) Scan(value interface{}) error {
 		if len(b) < 3 || b[0] != '*' || b[1] != '*' || b[2] != '*' {
 			return errors.New("Too short")
 		}
-
+		
 		*data = b[3:]
 		return nil
 	} else if s, ok := value.(string); ok {
 		*data = []byte(s)[3:]
 		return nil
 	}
-
+	
 	return errors.New("Bytes expected")
 }
 
@@ -185,7 +185,7 @@ func (data EncryptedData) Value() (driver.Value, error) {
 		// needed to test failures
 		return nil, errors.New("Should not start with 'x'")
 	}
-
+	
 	// prepend asterisks
 	return append([]byte("***"), data...), nil
 }
@@ -330,63 +330,63 @@ func TestGORMValuer(t *testing.T) {
 		Name  string
 		Point Point
 	}
-
+	
 	dryRunDB := DB.Session(&gorm.Session{DryRun: true})
-
+	
 	stmt := dryRunDB.Create(&UserWithPoint{
 		Name:  "jinzhu",
 		Point: Point{X: 100, Y: 100},
 	}).Statement
-
+	
 	if stmt.SQL.String() == "" || len(stmt.Vars) != 2 {
 		t.Errorf("Failed to generate sql, got %v", stmt.SQL.String())
 	}
-
+	
 	if !regexp.MustCompile(`INSERT INTO .user_with_points. \(.name.,.point.\) VALUES \(.+,ST_PointFromText\(.+\)\)`).MatchString(stmt.SQL.String()) {
 		t.Errorf("insert with sql.Expr, but got %v", stmt.SQL.String())
 	}
-
+	
 	if !reflect.DeepEqual([]interface{}{"jinzhu", "POINT(100 100)"}, stmt.Vars) {
 		t.Errorf("generated vars is not equal, got %v", stmt.Vars)
 	}
-
+	
 	stmt = dryRunDB.Model(UserWithPoint{}).Create(map[string]interface{}{
 		"Name":  "jinzhu",
 		"Point": clause.Expr{SQL: "ST_PointFromText(?)", Vars: []interface{}{"POINT(100 100)"}},
 	}).Statement
-
+	
 	if !regexp.MustCompile(`INSERT INTO .user_with_points. \(.name.,.point.\) VALUES \(.+,ST_PointFromText\(.+\)\)`).MatchString(stmt.SQL.String()) {
 		t.Errorf("insert with sql.Expr, but got %v", stmt.SQL.String())
 	}
-
+	
 	if !reflect.DeepEqual([]interface{}{"jinzhu", "POINT(100 100)"}, stmt.Vars) {
 		t.Errorf("generated vars is not equal, got %v", stmt.Vars)
 	}
-
+	
 	stmt = dryRunDB.Table("user_with_points").Create(&map[string]interface{}{
 		"Name":  "jinzhu",
 		"Point": clause.Expr{SQL: "ST_PointFromText(?)", Vars: []interface{}{"POINT(100 100)"}},
 	}).Statement
-
+	
 	if !regexp.MustCompile(`INSERT INTO .user_with_points. \(.Name.,.Point.\) VALUES \(.+,ST_PointFromText\(.+\)\)`).MatchString(stmt.SQL.String()) {
 		t.Errorf("insert with sql.Expr, but got %v", stmt.SQL.String())
 	}
-
+	
 	if !reflect.DeepEqual([]interface{}{"jinzhu", "POINT(100 100)"}, stmt.Vars) {
 		t.Errorf("generated vars is not equal, got %v", stmt.Vars)
 	}
-
+	
 	stmt = dryRunDB.Session(&gorm.Session{
 		AllowGlobalUpdate: true,
 	}).Model(&UserWithPoint{}).Updates(UserWithPoint{
 		Name:  "jinzhu",
 		Point: Point{X: 100, Y: 100},
 	}).Statement
-
+	
 	if !regexp.MustCompile(`UPDATE .user_with_points. SET .name.=.+,.point.=ST_PointFromText\(.+\)`).MatchString(stmt.SQL.String()) {
 		t.Errorf("update with sql.Expr, but got %v", stmt.SQL.String())
 	}
-
+	
 	if !reflect.DeepEqual([]interface{}{"jinzhu", "POINT(100 100)"}, stmt.Vars) {
 		t.Errorf("generated vars is not equal, got %v", stmt.Vars)
 	}
